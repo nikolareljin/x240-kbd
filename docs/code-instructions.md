@@ -11,7 +11,9 @@ and Markdown documentation. Keep each area simple and hardware-verifiable.
 - Keep feature selection in `rules.mk`.
 - Keep layout metadata in `keyboard.json` synchronized with `x240_pico.h`.
 - Keep user-facing behavior in `keymaps/default/keymap.c`, including base layer,
-  FN layer, custom keycodes, and long-press handling.
+  FN layer, and custom keycodes.
+- Keep keyboard-level hardware behavior in `x240_pico.c`, including dedicated
+  GPIO polling for the GP27 power button.
 - Use `KC_NO` for unused physical matrix positions and `KC_TRNS` for FN-layer
   pass-through entries.
 - Prefer small custom keycode handlers in `process_record_user()` over broad

@@ -38,7 +38,7 @@
 
 /* ---------------------------------------------------------------
  * Power button — GP27, active LOW, internal pull-up
- * Long-press guard (500 ms) is enforced in process_record_user().
+ * Long-press guard (500 ms) is enforced by matrix_scan_kb().
  * --------------------------------------------------------------- */
 #define POWER_BUTTON_PIN GP27
 #define POWER_BUTTON_HOLD_MS 500

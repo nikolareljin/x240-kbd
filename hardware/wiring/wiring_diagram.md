@@ -88,7 +88,7 @@ Complete GPIO-to-FPC wiring reference for the perfboard adapter.
 
    Power Button:
    ─────────────
-   GP27 ──────────── Power button FPC pin  (other side of button → GND via matrix)
+   GP27 ──────────── Power button FPC pin  (other side of button → GND)
    (Pico internal pull-up keeps GP27 HIGH; button pulls it LOW when pressed)
 
    Touchpad LED:

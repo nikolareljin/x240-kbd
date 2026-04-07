@@ -305,4 +305,4 @@ If anything is off, edit the OpenSCAD parameters and reprint.
 | Touchpad very slow | Sensitivity multiplier too low | Increase `PS2_MOUSE_X/Y_MULTIPLIER` |
 | Backlight always off | MOSFET wired incorrectly | Check Gate/Drain/Source orientation |
 | Backlight always on | Pull-down resistor missing | Add 100 kΩ Gate-to-GND |
-| Power button triggers instantly | No long-press timer | Check `process_record_user` code |
+| Power button triggers instantly | No long-press timer | Check `matrix_scan_kb` power-button polling |

@@ -21,22 +21,6 @@
  * Row 7:  FN   (power button handled separately via POWER_BUTTON_PIN)
  */
 
-/* Layer definitions */
-enum x240_layers {
-    _BASE = 0,
-    _FN,
-};
-
-/* Custom keycodes */
-enum x240_keycodes {
-    CK_BKLT = SAFE_RANGE,  /* Toggle backlight */
-    CK_FNLK,               /* FN Lock toggle   */
-    CK_PWR,                /* Power button     */
-};
-
-/* Power button long-press tracking */
-static uint16_t power_press_timer = 0;
-
 /* -------------------------------------------------------------------------
  * BASE layer — standard X240 QWERTY
  *
@@ -61,7 +45,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
     /* Row 6 */
     KC_DEL,  KC_HOME, KC_END,  KC_UP,   KC_LEFT, KC_DOWN, KC_RGHT, KC_NO,   KC_PSCR, KC_SCRL, KC_PAUS, KC_BSLS, KC_ENT,
     /* Row 7 */
-    MO(_FN), CK_PWR,  KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO
+    MO(_FN), KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO,   KC_NO
 ),
 
 /* -------------------------------------------------------------------------
@@ -107,18 +91,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             if (record->event.pressed) {
                 /* Toggle FN layer permanently on/off */
                 layer_invert(_FN);
-            }
-            return false;
-
-        case CK_PWR:
-            if (record->event.pressed) {
-                power_press_timer = timer_read();
-            } else {
-                if (timer_elapsed(power_press_timer) >= POWER_BUTTON_HOLD_MS) {
-                    /* Long press: send system power event */
-                    tap_code(KC_SYSTEM_POWER);
-                }
-                /* Short press: ignore — prevents accidental power-off */
             }
             return false;
 

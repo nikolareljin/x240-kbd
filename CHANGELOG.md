@@ -4,6 +4,8 @@ All notable project changes should be recorded here.
 
 ## Unreleased
 
+- Moved power-button handling out of the placeholder matrix keymap and into
+  keyboard-level GP27 polling with the existing long-press guard.
 - Added a full `docs/` documentation set covering project structure, design rules,
   coding instructions, and the build/test workflow.
 - Updated the README to link the new documentation and clarify repository layout.

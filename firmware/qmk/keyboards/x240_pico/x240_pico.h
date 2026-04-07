@@ -6,7 +6,6 @@
 enum x240_keycodes {
     CK_BKLT = SAFE_RANGE,  /* Toggle keyboard backlight */
     CK_FNLK,               /* Toggle FN Lock (permanently invert FN layer) */
-    CK_PWR,                /* Power button with long-press guard */
 };
 
 /* Layer indices */

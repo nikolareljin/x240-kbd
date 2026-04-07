@@ -34,6 +34,8 @@ documentation changes.
   and GP22 remain available.
 - Keep `BACKLIGHT_DRIVER = timer` unless the RP2040 PWM limitation is confirmed
   fixed for the QMK version being used.
+- Poll the dedicated GP27 power-button input in keyboard-level firmware rather
+  than representing it as a matrix key.
 - Do not treat the placeholder keymap as verified. Replace it with measured
   matrix positions after FPC probing.
 - Keep FN+Esc as FN Lock and FN+F11 as keyboard backlight control unless there is

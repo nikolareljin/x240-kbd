@@ -75,7 +75,8 @@ LTO_ENABLE             = yes
 - **Layer 0 BASE:** Full X240 QWERTY. FN key → `MO(_FN)`.
 - **Layer 1 FN:** F1–F12 → media/system keycodes. FN+Esc → FN Lock (`TG(_FN)`).
   FN+F11 → backlight toggle.
-- **Custom keycodes:** `CK_BKLT`, `CK_FNLK`, `CK_PWR` (long-press system power).
+- **Custom keycodes:** `CK_BKLT`, `CK_FNLK`. The power button is a dedicated
+  active-low GP27 input polled by keyboard-level firmware with a long-press guard.
 
 ### USB HID composite (no drivers, any OS)
 
