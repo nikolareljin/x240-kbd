@@ -45,8 +45,8 @@ qmk_home/
 *.tmp
 *.bak
 captures/
+CLAUDE.md
 **/CLAUDE.md
-!/CLAUDE.md
 
 # OS cruft
 .DS_Store
