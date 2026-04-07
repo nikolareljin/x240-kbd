@@ -1,0 +1,60 @@
+# QMK build output
+firmware/qmk/.build/
+.build/
+build/
+dist/
+*.uf2
+*.hex
+*.bin
+*.map
+*.elf
+*.eep
+*.lst
+*.sym
+
+# Python / CircuitPython cache
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+.Trash-*/
+
+# OpenSCAD exports (regenerate from .scad source)
+cad/exports/
+cad/exports/*.stl
+cad/exports/*.amf
+cad/exports/*.3mf
+cad/exports/*.obj
+cad/exports/*.off
+*.csg
+*.stl
+*.amf
+*.3mf
+
+# Local QMK checkouts or generated keyboard copies
+qmk_firmware/
+qmk_home/
+
+# Local notes and hardware captures
+*.log
+*.tmp
+*.bak
+captures/
+**/CLAUDE.md
+!/CLAUDE.md
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor dirs
+.vscode/
+.idea/
+*.swp
+*~
