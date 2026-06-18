@@ -182,3 +182,11 @@ Repository: [nikolareljin/x240-kbd](https://github.com/nikolareljin/x240-kbd)
 ## License
 
 GPL-2.0 — matching QMK firmware license.
+
+---
+
+## Clone traffic
+
+![Clone traffic](https://raw.githubusercontent.com/nikolareljin/stats/main/charts/x240-kbd.svg)
+
+_Updated daily. Total and unique cloners over the last 14 days._
