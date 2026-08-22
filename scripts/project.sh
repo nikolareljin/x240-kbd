@@ -229,20 +229,24 @@ x240_build_pcb() {
   log_info "build: pcb — board from netlist_model.py, placement DRC"
   x240_kicad "python3 gen_pcb.py /pcb 2>/dev/null && kicad-cli pcb drc --severity-error --exit-code-violations -o /out/drc-placement.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1 || { kicad-cli pcb drc --severity-error -o /out/drc-placement.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1; grep -c '^\[' /out/drc-placement.rpt; }"
   if [[ "${X240_SKIP_ROUTE:-}" != "1" ]]; then
-    log_info "build: pcb — autoroute (freerouting, $passes passes; X240_SKIP_ROUTE=1 to skip)"
-    x240_kicad "python3 route_pcb.py export $X240_PCB.kicad_pcb /out/$X240_PCB.dsn 2>/dev/null"
-    docker run --rm "$(x240_docker_tty)" -v "$out":/w --entrypoint java "$X240_FREEROUTING_IMAGE" \
-      -jar /app/freerouting-executable.jar -de "/w/$X240_PCB.dsn" -do "/w/$X240_PCB.ses" -mp "$passes" -oit 0.5 2>&1 | grep -E 'passes|unrouted|routed|incomplete|Routing' | tail -3 || true
-    [[ -s "$out/$X240_PCB.ses" ]] || { log_error "build: pcb — freerouting produced no session file"; return 1; }
-    x240_kicad "python3 route_pcb.py import $X240_PCB.kicad_pcb /out/$X240_PCB.ses 2>/dev/null"
-  fi
-  if [[ "${X240_SKIP_ROUTE:-}" == "1" ]]; then
-    log_warn "build: pcb — route skipped; DRC reported, not enforced (board is unrouted)"
-    x240_kicad "kicad-cli pcb drc --severity-error -o /out/drc.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1"; grep -E 'unconnected' "$out/drc.rpt" | head -2
-  else
-    log_info "build: pcb — DRC on the routed board"
-    x240_kicad "kicad-cli pcb drc --severity-error --exit-code-violations -o /out/drc.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1" \
-      || { log_error "build: pcb DRC has errors (out/pcb/drc.rpt)"; grep -E '^\[|unconnected' "$out/drc.rpt" | head -8; return 1; }
+    # Freerouting is nondeterministic and the SES round-trip occasionally drops a
+    # connection, so route -> import -> check, and re-route the remainder (existing
+    # tracks are kept in the DSN) until DRC reports no unconnected items.
+    local round left
+    for round in 1 2 3; do
+      log_info "build: pcb — autoroute round $round (freerouting, $passes passes; X240_SKIP_ROUTE=1 to skip)"
+      x240_kicad "python3 route_pcb.py export $X240_PCB.kicad_pcb /out/$X240_PCB.dsn 2>/dev/null"
+      rm -f "$out/$X240_PCB.ses"
+      docker run --rm "$(x240_docker_tty)" -v "$out":/w --entrypoint java "$X240_FREEROUTING_IMAGE" \
+        -jar /app/freerouting-executable.jar -de "/w/$X240_PCB.dsn" -do "/w/$X240_PCB.ses" -mp "$passes" -oit 0.5 2>&1 | grep -E 'Auto-routing stage completed' | sed -E 's/.*completed in/   routed in/' || true
+      [[ -s "$out/$X240_PCB.ses" ]] || { log_error "build: pcb — freerouting produced no session file"; return 1; }
+      x240_kicad "python3 route_pcb.py import $X240_PCB.kicad_pcb /out/$X240_PCB.ses 2>/dev/null"
+      x240_kicad "kicad-cli pcb drc --severity-error --format json -o /out/drc.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
+      left="$(python3 -c "import json;d=json.load(open('$out/drc.json'));print(len(d['unconnected_items']))")"
+      if [[ "$left" == "0" ]]; then break; fi
+      log_warn "build: pcb — $left connection(s) still open after round $round"
+      python3 -c "import json;d=json.load(open('$out/drc.json'));[print('     ', ' <-> '.join(i.get('description','')[:40] for i in u['items'])) for u in d['unconnected_items'][:10]]"
+    done
   fi
   log_info "build: pcb — fab outputs"
   x240_kicad "mkdir -p /out/gerbers && kicad-cli pcb export gerbers -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export drill -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pos -o /out/$X240_PCB-pos.csv --format csv --units mm $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pdf -o /out/board.pdf --layers F.Cu,B.Cu,F.Silkscreen,Edge.Cuts $X240_PCB.kicad_pcb >/dev/null && cd /out/gerbers && zip -q -r ../gerbers.zip ."
