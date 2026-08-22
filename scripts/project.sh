@@ -211,6 +211,14 @@ x240_build_cad() {
 # Generate, route, check and export the Rev B board. Every KiCad step runs in the kicad
 # image; routing runs in the freerouting image. Outputs land in out/pcb; the generated
 # .kicad_sch/.kicad_pcb are written back into hardware/pcb (they are committed).
+# Run one of the Python generators inside the KiCad image and return ITS exit status:
+# output goes to a log first, the debug build's 'm_group == nullptr' assert noise is
+# filtered out of the log afterwards, so neither a pipeline nor grep's own status can
+# mask a failure or fake one.
+x240_kicad_py() {
+  x240_kicad "python3 $* >/tmp/py.log 2>&1; rc=\$?; grep -v 'm_group == nullptr' /tmp/py.log || true; exit \$rc"
+}
+
 # Runs as the invoking user: the image's own uid (1000) only matches by luck, and in CI the
 # checkout belongs to uid 1001, so the generated files could not be written there.
 x240_kicad() {
@@ -227,9 +235,8 @@ x240_build_pcb() {
     || { log_error "build: pcb ERC has errors (out/pcb/erc.rpt)"; return 1; }
   x240_kicad "kicad-cli sch export pdf -o /out/schematic.pdf $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export netlist -o /out/$X240_PCB.net $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export bom -o /out/bom.csv --fields 'Reference,Value,Footprint,\${QUANTITY}' --group-by Value,Footprint $X240_PCB.kicad_sch >/dev/null"
   log_info "build: pcb — board from netlist_model.py, placement DRC"
-  # pcbnew prints a harmless 'm_group == nullptr' assert per item in this debug build; everything else on stderr matters
-  x240_kicad "python3 gen_pcb.py /pcb 2>&1 | grep -v 'm_group == nullptr' && kicad-cli pcb drc --severity-error --format json -o /out/drc-placement.json $X240_PCB.kicad_pcb >/dev/null 2>&1" \
-    || { log_error "build: pcb — gen_pcb.py failed (see above)"; return 1; }
+  x240_kicad_py "gen_pcb.py /pcb" || { log_error "build: pcb — gen_pcb.py failed (see above)"; return 1; }
+  x240_kicad "kicad-cli pcb drc --severity-error --format json -o /out/drc-placement.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
   # The board is unrouted here, so open connections are expected; any other error-severity
   # violation (overlapping courtyards, shorts, keepouts) is a placement bug and stops the build.
   if ! python3 - "$out/drc-placement.json" <<'PYEOF'
@@ -248,12 +255,12 @@ PYEOF
     local round left
     for round in 1 2 3; do
       log_info "build: pcb — autoroute round $round (freerouting, $passes passes; X240_SKIP_ROUTE=1 to skip)"
-      x240_kicad "python3 route_pcb.py export $X240_PCB.kicad_pcb /out/$X240_PCB.dsn 2>&1 | grep -v 'm_group == nullptr'"
+      x240_kicad_py "route_pcb.py export $X240_PCB.kicad_pcb /out/$X240_PCB.dsn" || { log_error "build: pcb — DSN export failed"; return 1; }
       rm -f "$out/$X240_PCB.ses"
       docker run --rm "$(x240_docker_tty)" -v "$out":/w --entrypoint java "$X240_FREEROUTING_IMAGE" \
         -jar /app/freerouting-executable.jar -de "/w/$X240_PCB.dsn" -do "/w/$X240_PCB.ses" -mp "$passes" -oit 0.5 2>&1 | grep -E 'Auto-routing stage completed' | sed -E 's/.*completed in/   routed in/' || true
       [[ -s "$out/$X240_PCB.ses" ]] || { log_error "build: pcb — freerouting produced no session file"; return 1; }
-      x240_kicad "python3 route_pcb.py import $X240_PCB.kicad_pcb /out/$X240_PCB.ses 2>&1 | grep -v 'm_group == nullptr'"
+      x240_kicad_py "route_pcb.py import $X240_PCB.kicad_pcb /out/$X240_PCB.ses" || { log_error "build: pcb — SES import failed"; return 1; }
       x240_kicad "kicad-cli pcb drc --severity-error --format json -o /out/drc.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
       left="$(python3 -c "import json;d=json.load(open('$out/drc.json'));print(len(d['unconnected_items']))")"
       if [[ "$left" == "0" ]]; then break; fi
