@@ -236,9 +236,14 @@ x240_build_pcb() {
     [[ -s "$out/$X240_PCB.ses" ]] || { log_error "build: pcb — freerouting produced no session file"; return 1; }
     x240_kicad "python3 route_pcb.py import $X240_PCB.kicad_pcb /out/$X240_PCB.ses 2>/dev/null"
   fi
-  log_info "build: pcb — DRC on the routed board"
-  x240_kicad "kicad-cli pcb drc --severity-error --exit-code-violations -o /out/drc.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1" \
-    || { log_error "build: pcb DRC has errors (out/pcb/drc.rpt)"; grep -E '^\[|unconnected' "$out/drc.rpt" | head -8; return 1; }
+  if [[ "${X240_SKIP_ROUTE:-}" == "1" ]]; then
+    log_warn "build: pcb — route skipped; DRC reported, not enforced (board is unrouted)"
+    x240_kicad "kicad-cli pcb drc --severity-error -o /out/drc.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1"; grep -E 'unconnected' "$out/drc.rpt" | head -2
+  else
+    log_info "build: pcb — DRC on the routed board"
+    x240_kicad "kicad-cli pcb drc --severity-error --exit-code-violations -o /out/drc.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1" \
+      || { log_error "build: pcb DRC has errors (out/pcb/drc.rpt)"; grep -E '^\[|unconnected' "$out/drc.rpt" | head -8; return 1; }
+  fi
   log_info "build: pcb — fab outputs"
   x240_kicad "mkdir -p /out/gerbers && kicad-cli pcb export gerbers -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export drill -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pos -o /out/$X240_PCB-pos.csv --format csv --units mm $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pdf -o /out/board.pdf --layers F.Cu,B.Cu,F.Silkscreen,Edge.Cuts $X240_PCB.kicad_pcb >/dev/null && cd /out/gerbers && zip -q -r ../gerbers.zip ."
   print_success "build: $out (schematic.pdf, board.pdf, gerbers.zip, bom.csv, $X240_PCB-pos.csv)"
