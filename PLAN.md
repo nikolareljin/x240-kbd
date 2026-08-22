@@ -62,9 +62,9 @@ BOOTLOADER             = rp2040
 CUSTOM_MATRIX          = lite        # 74HC165 chain in matrix.c
 SRC                   += matrix.c synaptics.c trackpoint.c
 POINTING_DEVICE_ENABLE = yes
-POINTING_DEVICE_DRIVER = ps2
-PS2_MOUSE_ENABLE       = yes
+POINTING_DEVICE_DRIVER = custom      # synaptics.c owns the bus (6-byte packets)
 PS2_ENABLE             = yes
+PS2_MOUSE_ENABLE       = no          # ps2_mouse.c only knows 3-byte packets
 PS2_DRIVER             = vendor      # RP2040 PIO; usart is ATmega32u4-only
 BACKLIGHT_ENABLE       = yes         # backlit keyboard variants
 BACKLIGHT_DRIVER       = software    # RP2040 pwm fails to build (QMK #24470)
@@ -199,7 +199,7 @@ pull-downs) to the Pico's underside pads **TP1 = GND, TP2 = D−, TP3 = D+** plu
 - [ ] ClickPad: cursor, left click, right click
 - [ ] TrackPoint: cursor moves from the stick alone
 - [ ] Media keys work on Windows 10/11, macOS 14+, Ubuntu 24
-- [ ] Backlight: 5 levels + breathing (backlit variant)
+- [ ] Backlight: 5 levels (backlit variant; breathing is unavailable with software PWM)
 - [ ] Power button: hold ≥ 500 ms → system power dialog; short press ignored
 - [ ] FN Lock works
 - [ ] Enumerates with no driver install on a fresh OS

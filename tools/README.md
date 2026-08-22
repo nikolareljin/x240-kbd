@@ -1,8 +1,9 @@
 # Probing and bring-up tools
 
 CircuitPython scripts that run on the Raspberry Pi Pico **before** QMK is flashed. Each is
-standalone: copy it to the `CIRCUITPY` drive as `code.py`, open a serial terminal at
-115200 baud, and edit the constants at the top of the file to match your wiring.
+standalone: `./probe <tool>` copies it to the `CIRCUITPY` drive as `code.py` (or do it by
+hand), open a serial terminal at 115200 baud, and edit the constants at the top of the
+file to match your wiring.
 
 | Tool | Milestone step | Edit first |
 |---|---|---|
@@ -22,7 +23,7 @@ The protocol and table-formatting logic in each script is plain Python with no h
 imports, so it is unit-tested on a PC:
 
 ```bash
-cd tools/tests && python3 -m pytest -q
+./dev test            # or: cd tools/tests && python3 -m pytest -q
 ```
 
 Covers the two-pass pad maps and result merging, PS/2 parity and packet decoding, the

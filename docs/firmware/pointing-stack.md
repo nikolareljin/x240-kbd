@@ -22,10 +22,15 @@ synaptics.c                                   — identify, mode, 6-byte packet 
 x240_pico.c : pointing_device_task_kb()       — merge, scale, invert → report_mouse_t
 ```
 
-QMK's PS/2 host API used: `ps2_host_init()`, `ps2_host_send(uint8_t)`,
-`ps2_host_recv_response()`, `ps2_host_recv()`.
+`synaptics.c` is QMK's **custom pointing-device driver** (`POINTING_DEVICE_DRIVER =
+custom`): it implements `pointing_device_driver_init()` and
+`pointing_device_driver_get_report()` on the PS/2 host API — `ps2_host_init()`,
+`ps2_host_send(uint8_t)` (returns the ACK), `ps2_host_recv_response()` (blocking, 100 ms),
+`ps2_host_recv()` + `pbuf_has_data()` (buffered, non-blocking), and `ps2_error`. QMK's own
+`ps2_mouse.c` is compiled out (`PS2_MOUSE_ENABLE = no`) because it only understands 3-byte
+packets and would consume the same receive queue.
 
-## Initialisation (`synaptics_init()`, called from `keyboard_post_init_kb`)
+## Initialisation (`pointing_device_driver_init()`, called by QMK at startup)
 
 1. `ps2_host_init()`; send `0xFF` reset, expect `0xFA 0xAA 0x00`.
 2. **Identify.** `synaptics_query(0x00)`: send `0xE8 0x00`, `0xE8 0x00`, `0xE8 0x00`,
@@ -35,16 +40,17 @@ QMK's PS/2 host API used: `ps2_host_init()`, `ps2_host_send(uint8_t)`,
    extended capabilities exist.
 4. **Mode byte.** `0x80 | 0x40 | 0x01` (absolute, rate 80, W-mode). Write with the knock
    then `0xF3 0x14` (`SetSampleRate 20`).
-5. **Pass-through.** If capable, enable per the guide's pass-through section so guest
-   packets are forwarded; the guest device also needs its own `0xF4` (enable streaming),
-   sent *through* the pass-through mechanism.
+5. **Pass-through.** If the capability bit is set, send the guest its own `0xF4` (enable
+   streaming) *through* the pass-through: the byte in the special-sequence encoding
+   followed by `0xF3 0x28` — rate `0x28` is the "to guest" marker (Linux
+   `synaptics_pt_write`).
 6. `0xF4` enable data reporting on the ClickPad itself.
 
 Each step checks the `0xFA` ack. Any failure ⇒ `synaptics_fallback()`: re-init as a plain
 PS/2 mouse (`0xFF`, `0xF4`), set `mode = RELATIVE`, and `dprintf("synaptics: identify failed,
 relative mode, no TrackPoint\n")`. The touchpad works; the log says the TrackPoint does not.
 
-## Packet parsing (`synaptics_task()`)
+## Packet parsing (`pointing_device_driver_get_report()`)
 
 Read bytes into a 6-byte buffer. Frame alignment: byte 0 has bits `1 0 W3 W2 0 W1 R L`
 (bit 7 set, bit 6 clear, bit 3 clear) and byte 3 has bits 7 and 6 set. Drop bytes until
@@ -80,13 +86,11 @@ b5: Y delta (8 bits, sign from Ys)
 Decode exactly as `ps2_mouse.c` does, then scale by `SYN_TRACKPOINT_SCALE`. Sign convention:
 PS/2 Y is positive-up, HID is positive-down — invert Y once, here, and nowhere else.
 
-## Merge (`pointing_device_task_kb`)
+## Merge
 
-```c
-report.x = clamp(tp.dx + tpt.dx);
-report.y = clamp(tp.dy + tpt.dy);
-report.buttons = tp.buttons | tpt.buttons;
-```
+Both decoders add into the same `report_mouse_t` inside `get_report()`: deltas are summed
+and clamped to the HID range, buttons are OR-ed. `pointing_device_task_kb()` in
+`x240_pico.c` is a pass-through.
 
 Both sources rarely move in the same scan; summing is simplest and feels right. Buttons are
 OR-ed: the ClickPad's zones and the guest's buttons (if the module reports any) all count.
@@ -95,10 +99,11 @@ OR-ed: the ClickPad's zones and the guest's buttons (if the module reports any) 
 
 | Constant | Start | Tune by |
 |---|---|---|
-| `SYN_TOUCHPAD_SCALE` | 1/8 (absolute units are ~0–6000) | cursor should cross a 1080p screen in one comfortable swipe |
-| `SYN_TRACKPOINT_SCALE` | 1 | slow drift when resting a finger ⇒ add a ±1 dead zone, not lower scale |
-| `SYN_TOUCH_THRESHOLD` | `z > 30` | lower if light touches are missed |
-| Y inversion | on | if the cursor goes up when you push down |
+| `SYN_TOUCHPAD_DIVISOR` | 8 (absolute units are ~0–6000) | cursor should cross a 1080p screen in one comfortable swipe |
+| `SYN_TRACKPOINT_MULT` | 1 | faster stick |
+| `SYN_TRACKPOINT_DEADZONE` | 0 | slow drift when resting a finger ⇒ set 1 or 2, not lower scale |
+| `SYN_TOUCH_THRESHOLD` | 30 | lower if light touches are missed |
+| `SYN_INVERT_Y` | undefined | define if the cursor goes up when you push down |
 
 ## Test checklist (M4)
 

@@ -5,11 +5,12 @@ nav_exclude: true
 
 # Build and test workflow
 
-From raw hardware to a verified device. Each step maps to a milestone.
+From raw hardware to a verified device. Each step maps to a milestone. The commands are
+`./dev` verbs (`scripts/project.sh`); CI runs `./dev test` and `./dev build all`.
 
 ## 1. Probe the keyboard FPC (M2)
 
-CircuitPython on the Pico; `tools/matrix_probe/matrix_probe.py` as `code.py`; two passes
+CircuitPython on the Pico; `./probe matrix_probe` copies the tool as `code.py`; two passes
 over the 40 pads (`PASS = "A"` then `"B"`); 115200 baud. Output is a Markdown table. Record drive/sense pairs per key, matrix size, GND/VCC,
 backlight, power button, and the three-key ghost result in
 `hardware/pinout/x240_keyboard_fpc_pinout.md`.
@@ -26,7 +27,7 @@ Build the 74HC165 chain; run `tools/shift_register_test/shift_register_test.py` 
 `MODE = "walk"` — it prompts S0…S23 in order and names the wiring fault on any mismatch.
 Only then connect the keyboard FPC.
 
-Host-side unit tests for the tools' protocol logic: `cd tools/tests && python3 -m pytest -q`.
+Host-side checks: `./dev test` (pytest for the tools, byte-compile, link check, shellcheck).
 
 ## 4. Wire the rest (M3)
 
@@ -35,14 +36,14 @@ Per `hardware/wiring/wiring_diagram.md`. Complete its pre-power checklist before
 ## 5. Build and flash firmware (M4)
 
 ```bash
-pip install qmk && qmk setup
-cp -r firmware/qmk/keyboards/x240_pico ~/qmk_firmware/keyboards/x240_pico
-qmk compile -kb x240_pico -km default
-qmk flash   -kb x240_pico -km default
+./dev install        # once: submodules, docker images, shallow qmk_firmware checkout
+./dev build          # qmk compile in qmkfm/qmk_cli -> out/x240_pico_default.uf2
+./dev deploy         # waits for the RPI-RP2 drive and copies the UF2
 ```
 
-First flash: BOOTSEL → `RPI-RP2` → drag the UF2. Later: `qmk flash`, Bootmagic (top-left
-key), or the `RUN` reset switch + BOOTSEL.
+`QMK_HOME` points the build at an existing checkout. First flash: BOOTSEL → `RPI-RP2`.
+Later: `./dev deploy`, Bootmagic (top-left key), or the `RUN` reset switch + BOOTSEL.
+Debug output: `./dev logs` (`qmk console`).
 
 ## 6. Validate USB HID (M4 → M8)
 

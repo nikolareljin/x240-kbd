@@ -21,15 +21,26 @@ had it wrong — what changed and why.
 | `NKRO_ENABLE` | `yes` | [NKRO](https://docs.qmk.fm/keycodes_magic) | With `FORCE_NKRO` in `config.h` |
 | `CUSTOM_MATRIX` | `lite` | [Custom matrix](https://docs.qmk.fm/custom_matrix) | **Changed** — the 74HC165 chain needs `matrix_scan_custom()` |
 | `SRC` | `+= matrix.c synaptics.c trackpoint.c` | | **Changed** — new sources |
+| `CONSOLE_ENABLE` | `yes` | [Debugging](https://docs.qmk.fm/faq_debug) | bring-up: `synaptics.c` logs identify/fallback via `dprintf` |
 | `POINTING_DEVICE_ENABLE` | `yes` | [Pointing device](https://docs.qmk.fm/features/pointing_device) | |
-| `POINTING_DEVICE_DRIVER` | `ps2` | same | |
-| `PS2_MOUSE_ENABLE` | `yes` | [PS/2 mouse](https://docs.qmk.fm/features/ps2_mouse) | |
+| `POINTING_DEVICE_DRIVER` | `custom` | same | **Changed from `ps2`** — see below |
+| `PS2_MOUSE_ENABLE` | `no` | [PS/2 mouse](https://docs.qmk.fm/features/ps2_mouse) | **Changed from `yes`** — `ps2_mouse.c` would fight `synaptics.c` for the bus |
 | `PS2_ENABLE` | `yes` | same | |
 | `PS2_DRIVER` | `vendor` | same | **Changed from `usart`** — see below |
 | `BACKLIGHT_ENABLE` | `yes` (backlit keyboards only) | [Backlight](https://docs.qmk.fm/features/backlight) | |
 | `BACKLIGHT_DRIVER` | `software` | same | **Changed from `timer`** — see below |
 | `LTO_ENABLE` | `yes` | | Smaller binary |
-| `CONSOLE_ENABLE` | `yes` during bring-up, `no` for release | [Debugging](https://docs.qmk.fm/faq_debug) | Needed to see the Synaptics fallback log |
+
+### Why `POINTING_DEVICE_DRIVER = custom`
+
+QMK's `ps2_mouse.c` (what `POINTING_DEVICE_DRIVER = ps2` compiles in) assembles **3-byte
+relative packets** and nothing else. The TrackPoint arrives inside 6-byte Synaptics
+absolute packets, so the ClickPad has to be driven in absolute + W mode by our own code.
+Two consumers cannot share one PS/2 receive queue, so `PS2_MOUSE_ENABLE = no` and
+`synaptics.c` implements the custom pointing-device driver
+(`pointing_device_driver_init/get_report/get_cpi/set_cpi`) directly on the PS/2 host API
+(`ps2_host_init`, `ps2_host_send`, `ps2_host_recv`, `ps2_host_recv_response`,
+`pbuf_has_data`). `PS2_ENABLE = yes` still pulls in the RP2040 PIO host driver.
 
 ### Why `PS2_DRIVER = vendor`
 
@@ -62,14 +73,14 @@ records and is what we use. Detail in [`../hardware/backlight.md`](../hardware/b
   "processor": "RP2040",
   "bootloader": "rp2040",
   "features": { "bootmagic": true, "extrakey": true, "mousekey": true, "nkro": true },
+  "bootmagic": { "matrix": [0, 0] },
   "ps2": {
     "enabled": true,
-    "mouse_enabled": true,
+    "mouse_enabled": false,
     "driver": "vendor",
     "data_pin": "GP21",
     "clock_pin": "GP22"
   },
-  "diode_direction": "COL2ROW",
   "matrix_size": { "rows": 10, "cols": 24 },
   "layouts": { "LAYOUT": { "layout": [ "...generated from the measured matrix..." ] } }
 }
@@ -91,18 +102,21 @@ records and is what we use. Detail in [`../hardware/backlight.md`](../hardware/b
 | `MATRIX_DRIVE_PINS` | `{ GP0, …, GP9 }` | drive lines, consumed by `matrix.c` |
 | `SENSE_PL_PIN` / `SENSE_CP_PIN` / `SENSE_Q7_PIN` | `GP17` / `GP18` / `GP16` | chain control; CP/Q7 are SPI0 SCK/RX |
 | `SENSE_CHAIN_BITS` | `24` | 3 × 74HC165 |
-| `SPI_SCK_PIN` / `SPI_MISO_PIN` | `GP18` / `GP16` | QMK SPI master config for the chain |
-| `PS2_MOUSE_X_MULTIPLIER` / `_Y_` | `3` | only used in the relative-mode fallback |
-| `SYN_TOUCHPAD_SCALE` / `SYN_TRACKPOINT_SCALE` | tuned in M4 | independent sensitivity for the two sources |
+| `SPI_DRIVER` / `SPI_SCK_PIN` / `SPI_MISO_PIN` / `SPI_MOSI_PIN` | `SPID0` / `GP18` / `GP16` / `NO_PIN` | QMK SPI master on RP2040 SPI0; `halconf.h` sets `HAL_USE_SPI`, `mcuconf.h` sets `RP_SPI_USE_SPI0` |
+| `SENSE_SPI_DIVISOR` | `16` | ≈7.8 MHz on the 125 MHz peripheral clock |
+| `SYN_TOUCHPAD_DIVISOR` | `8` | absolute units per HID count |
+| `SYN_TOUCH_THRESHOLD` | `30` | Z above this = finger down |
+| `SYN_TRACKPOINT_MULT` / `SYN_TRACKPOINT_DEADZONE` | `1` / `0` | TrackPoint scaling and drift guard |
+| `SYN_INVERT_Y` | undefined | define if vertical motion is reversed |
+| `POINTING_DEVICE_TASK_THROTTLE_MS` | `1` | drain the PS/2 queue every millisecond |
 | `BACKLIGHT_PIN` | `GP26` | |
 | `BACKLIGHT_LEVELS` | `5` | |
-| `BACKLIGHT_BREATHING` | defined | |
-| `BREATHING_PERIOD` | `6` | seconds — note the upstream name is `BREATHING_PERIOD`, not `BACKLIGHT_BREATHING_PERIOD` |
+| `BACKLIGHT_BREATHING` | **not defined** | the software PWM driver errors out on it |
 | `POWER_BUTTON_PIN` | `GP27` | active LOW, internal pull-up |
 | `POWER_BUTTON_HOLD_MS` | `500` | long-press guard |
 | `TOUCHPAD_LED_PIN` | `GP28` | HIGH = on |
 | `FORCE_NKRO` | defined | |
-| `BOOTMAGIC_ROW` / `BOOTMAGIC_COLUMN` | `0` / `0` | top-left key; note the current upstream names drop the `_LITE` |
+| *(keyboard.json `bootmagic.matrix`)* | `[0, 0]` | top-left key enters the bootloader at plug-in |
 
 **Removed:** the comment claiming GP21/GP22 are "UART0 CTS/TX / RX". On the RP2040, UART0
 is on GP0/1, GP12/13 or GP16/17 and UART1 on GP4/5, GP8/9 or GP20/21. GP21/GP22 is not a

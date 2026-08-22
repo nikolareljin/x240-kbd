@@ -22,7 +22,7 @@ Works on **any OS without drivers** — it enumerates as a standard USB HID comp
 - Synaptics ClickPad — cursor, left/right click zones
 - **TrackPoint** — via the ClickPad's pass-through port, decoded in firmware
 - FN layer with the ThinkPad media/system keys; FN Lock (FN + Esc)
-- Keyboard backlight, 5 levels + breathing (backlit keyboard variants)
+- Keyboard backlight, 5 levels (backlit keyboard variants; no breathing — software PWM)
 - Power button with a 500 ms long-press guard → OS power/sleep
 - Touchpad indicator LED
 - N-Key Rollover
@@ -86,26 +86,40 @@ x240-kbd/
 
 ## Quick start
 
+Everything runs through one entry point, `./dev` (verbs from the workspace-wide
+[script-helpers](https://github.com/nikolareljin/script-helpers) template; toolchains in
+Docker, so the host needs only `docker`, `git` and `python3`):
+
+```bash
+./dev install            # submodules, docker images, a shallow qmk_firmware checkout
+./dev build [firmware|docs|tools|all]
+./dev test               # host pytest for the tools, link check, shellcheck
+./dev preflight          # everything CI runs: test + build all
+./dev deploy             # copy the UF2 to the Pico's RPI-RP2 drive  (alias: ./flash)
+./dev deploy matrix_probe   # copy a probing tool to CIRCUITPY        (alias: ./probe <tool>)
+./dev devices            # RPI-RP2 / CIRCUITPY mounts and serial ports
+./dev logs               # qmk console — the firmware's debug output
+```
+
+Shims `./build`, `./test`, `./flash`, `./probe`, `./site` wrap the same verbs. Artifacts
+land in `out/`. CI (`.github/workflows/ci.yml`, via
+[ci-helpers](https://github.com/nikolareljin/ci-helpers)) runs `./dev test` and
+`./dev build all` on every push and PR.
+
 1. **Read the component reference and buy parts** —
    [`docs/hardware/components.md`](docs/hardware/components.md),
    [`docs/hardware/bom-and-cost.md`](docs/hardware/bom-and-cost.md).
-2. **Probe the FPC pinouts — mandatory first step.** Flash CircuitPython, run
-   `tools/matrix_probe/matrix_probe.py`, then `tools/ps2_sniffer/ps2_sniffer.py`, following
+2. **Probe the FPC pinouts — mandatory first step.** Flash CircuitPython, `./probe
+   matrix_probe`, then `./probe ps2_sniffer`, following
    [`hardware/pinout/probing_procedure.md`](hardware/pinout/probing_procedure.md). Do not
    wire the Pico to anything before this is done.
 3. **Build the Rev A adapter** — [`ASSEMBLY.md`](ASSEMBLY.md) Phase 2, using
    [`hardware/wiring/wiring_diagram.md`](hardware/wiring/wiring_diagram.md).
-4. **Build and flash firmware** —
-
-   ```bash
-   pip install qmk && qmk setup
-   cp -r firmware/qmk/keyboards/x240_pico ~/qmk_firmware/keyboards/x240_pico
-   qmk compile -kb x240_pico -km default
-   qmk flash   -kb x240_pico -km default      # hold BOOTSEL while plugging in
-   ```
-
-   The current definition is corrected in milestone M4 (custom matrix, PIO PS/2 driver,
-   Synaptics decoding); see [`docs/firmware/qmk-configuration.md`](docs/firmware/qmk-configuration.md).
+4. **Build and flash firmware** — `./dev build` then `./dev deploy` (hold BOOTSEL while
+   plugging in). Without `./dev`: copy `firmware/qmk/keyboards/x240_pico` into a QMK
+   checkout and `qmk compile -kb x240_pico -km default`. The firmware **builds** (custom
+   74HC165 matrix, PIO PS/2 host, Synaptics + TrackPoint decoding); the key map is a
+   placeholder until probing (#38). [`docs/firmware/qmk-configuration.md`](docs/firmware/qmk-configuration.md).
 5. **Choose an enclosure** — printed:
    [`docs/enclosure/printed.md`](docs/enclosure/printed.md); no printer:
    [`docs/enclosure/handmade.md`](docs/enclosure/handmade.md).
@@ -156,7 +170,7 @@ Alternatively use a **Pimoroni Pico LiPo** (USB-C native, same pinout).
 ## Flashing
 
 - **First flash:** hold BOOTSEL while plugging in → `RPI-RP2` drive → drag the `.uf2`.
-- **After that:** `qmk flash`, or hold the top-left key (Esc) while plugging in (Bootmagic).
+- **After that:** `./dev deploy`, or hold the top-left key (Esc) while plugging in (Bootmagic).
 - **Recommended:** wire a tactile switch to the Pico's `RUN` pad, reachable through the
   case, so BOOTSEL + reset works without opening anything.
 

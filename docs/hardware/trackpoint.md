@@ -37,13 +37,14 @@ for the fallback until that measurement says so.
 ## What QMK does and does not do
 
 QMK's `ps2_mouse` feature speaks **plain PS/2 relative mode**: 3-byte packets, X/Y deltas,
-three buttons. It initialises the device with a standard reset and reads packets. In that
-mode a Synaptics ClickPad behaves like an ordinary PS/2 mouse and **silently drops** the
-guest stream — the TrackPoint is dead.
+three buttons. In that mode a Synaptics ClickPad behaves like an ordinary PS/2 mouse and
+**silently drops** the guest stream — the TrackPoint is dead.
 
-To get the TrackPoint we must put the ClickPad into Synaptics **absolute mode with
-pass-through enabled**, then decode its 6-byte packets ourselves. That is the
-`synaptics.c` / `trackpoint.c` work in [`../firmware/pointing-stack.md`](../firmware/pointing-stack.md).
+So the firmware does not use `ps2_mouse` at all. It keeps QMK's RP2040 PIO PS/2 *host*
+(`PS2_ENABLE = yes`, `PS2_DRIVER = vendor`) and implements the pointing device itself
+(`POINTING_DEVICE_DRIVER = custom`): put the ClickPad into Synaptics **absolute mode with
+pass-through enabled**, then decode the 6-byte packets. That is `synaptics.c` /
+`trackpoint.c` — [`../firmware/pointing-stack.md`](../firmware/pointing-stack.md).
 
 ## The Synaptics protocol, briefly
 
