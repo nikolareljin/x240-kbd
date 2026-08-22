@@ -237,7 +237,7 @@ x240_build_pcb() {
   # kicad-cli literally: the outer double quotes need \$ to stop bash expanding it here.
   x240_kicad "kicad-cli sch export pdf -o /out/schematic.pdf $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export netlist -o /out/$X240_PCB.net $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export bom -o /out/bom.csv --fields Reference,Value,Footprint,\\\${QUANTITY} --group-by Value,Footprint $X240_PCB.kicad_sch >/dev/null" \
     || { log_error "build: pcb — schematic PDF/netlist/BOM export failed"; return 1; }
-  grep -q 'Qty\|QUANTITY' "$out/bom.csv" || { log_error "build: pcb — bom.csv has no quantity column (field escaping)"; return 1; }
+  grep -qE 'Qty|QUANTITY' "$out/bom.csv" || { log_error "build: pcb — bom.csv has no quantity column (field escaping)"; return 1; }
   log_info "build: pcb — board from netlist_model.py, placement DRC"
   x240_kicad_py "gen_pcb.py /pcb" || { log_error "build: pcb — gen_pcb.py failed (see above)"; return 1; }
   x240_kicad "kicad-cli pcb drc --severity-error --format json -o /out/drc-placement.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
@@ -266,6 +266,16 @@ PYEOF
       [[ -s "$out/$X240_PCB.ses" ]] || { log_error "build: pcb — freerouting produced no session file"; return 1; }
       x240_kicad_py "route_pcb.py import $X240_PCB.kicad_pcb /out/$X240_PCB.ses" || { log_error "build: pcb — SES import failed"; return 1; }
       x240_kicad "kicad-cli pcb drc --severity-error --format json -o /out/drc.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
+      # Shorts, clearance and keepout errors cannot be fixed by another routing round: stop now.
+      if ! python3 - "$out/drc.json" <<'PYEOF'
+import json, sys
+d = json.load(open(sys.argv[1]))
+bad = [v for v in d["violations"] if v["severity"] == "error"]
+for v in bad[:10]:
+    print("     ", v["type"], "|", v["description"][:70], "|", [i.get("description", "")[:36] for i in v["items"]])
+sys.exit(1 if bad else 0)
+PYEOF
+      then log_error "build: pcb — routed board has DRC errors (out/pcb/drc.json)"; return 1; fi
       left="$(python3 -c "import json;d=json.load(open('$out/drc.json'));print(len(d['unconnected_items']))")"
       if [[ "$left" == "0" ]]; then break; fi
       log_warn "build: pcb — $left connection(s) still open after round $round"

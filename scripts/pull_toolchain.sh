@@ -77,7 +77,9 @@ if $verify; then
   echo "jekyll:   $(docker run --rm "$JEKYLL_IMAGE" jekyll --version 2>/dev/null)"
   echo "openscad: $(docker run --rm "$OPENSCAD_IMAGE" openscad --version 2>&1 | head -1)"
   echo "kicad:    $(docker run --rm "$KICAD_IMAGE" kicad-cli version 2>/dev/null)"
-  echo "freerouting: $(docker run --rm --entrypoint java "$FREEROUTING_IMAGE" -jar /app/freerouting-executable.jar --version 2>&1 | grep -o 'Freerouting v[0-9.]*' | head -1)"
+  # best-effort: the banner format is not a contract, and under pipefail a non-match must not abort --verify
+  fr_ver="$(docker run --rm --entrypoint java "$FREEROUTING_IMAGE" -jar /app/freerouting-executable.jar --version 2>&1 | grep -o 'Freerouting v[0-9.]*' | head -1 || true)"
+  echo "freerouting: ${fr_ver:-(version banner not recognised)}"
   echo "qmk_firmware ref: $QMK_FIRMWARE_REF"
 fi
 print_success "toolchain ready"
