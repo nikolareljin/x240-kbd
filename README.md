@@ -137,6 +137,8 @@ The default build uses the Pico's built-in Micro-USB port. To add USB-C:
    has an `usb_c = true` parameter that swaps the cutout shape).
 3. No firmware changes required.
 
+![USB-C Breakout Wiring to Raspberry Pi Pico](docs/images/usb_c_wiring.png)
+
 Alternatively, use a **Pimoroni Pico LiPo** which has USB-C natively and the same
 26 GPIO pinout.
 

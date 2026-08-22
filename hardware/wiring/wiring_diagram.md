@@ -97,9 +97,19 @@ Complete GPIO-to-FPC wiring reference for the perfboard adapter.
                        LED cathode (–) ─── GND
 ```
 
+### USB-C Breakout Wiring
+
+For the optional USB-C upgrade, the breakout board is wired directly to the Pico's test pads on the underside of the board, as well as the VBUS and GND pins:
+
+![USB-C Breakout Wiring to Raspberry Pi Pico](../../docs/images/usb_c_wiring.png)
+
 ---
 
 ## Keyboard FPC to Breakout to Pico
+
+To connect the keyboard's 40-pin FPC ribbon cable, insert it into a 0.5 mm pitch ZIF breakout board as shown below:
+
+![FPC Ribbon Cable and ZIF Breakout Board Connection](../../docs/images/fpc_zif_wiring.png)
 
 After completing Phase 1 probing, fill the table below with the actual FPC pin
 numbers that correspond to each matrix row/column:

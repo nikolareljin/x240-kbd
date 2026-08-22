@@ -238,6 +238,9 @@ Optional upgrade:
 - Solder USB-C female breakout to Pico pads TP1 (D−), TP2 (D+), VBUS, GND.
 - Set `usb_c = true` in `cad/bottom_case.scad` before printing.
 - No firmware changes needed.
+
+![USB-C Breakout Wiring to Raspberry Pi Pico](docs/images/usb_c_wiring.png)
+
 - Alternative: Pimoroni Pico LiPo (USB-C native, same pinout).
 
 ---
