@@ -10,7 +10,7 @@
 # not be edited; this file is where the verbs get their meaning.
 #
 #   ./dev install                    submodules, docker images, qmk_firmware checkout
-#   ./dev build [firmware|docs|tools|cad|all]
+#   ./dev build [firmware|docs|tools|cad|pcb|all]
 #   ./dev test                       host pytest, py_compile, link check, shellcheck
 #   ./dev preflight                  test + build all (what CI runs)
 #   ./dev deploy [firmware|<tool>]   copy the UF2 to RPI-RP2, or a tool to CIRCUITPY
@@ -33,6 +33,10 @@ X240_QMK_HOME="${QMK_HOME:-$DEV_REPO_ROOT/qmk_firmware}"
 X240_QMK_IMAGE="${QMK_DOCKER_IMAGE:-$QMK_IMAGE}"
 X240_JEKYLL_IMAGE="${JEKYLL_DOCKER_IMAGE:-$JEKYLL_IMAGE}"
 X240_OPENSCAD_IMAGE="${OPENSCAD_DOCKER_IMAGE:-$OPENSCAD_IMAGE}"
+X240_KICAD_IMAGE="${KICAD_DOCKER_IMAGE:-$KICAD_IMAGE}"
+X240_FREEROUTING_IMAGE="${FREEROUTING_DOCKER_IMAGE:-$FREEROUTING_IMAGE}"
+X240_PCB_DIR="$DEV_REPO_ROOT/hardware/pcb"
+X240_PCB="x240_pico_rev_b"
 X240_OUT="$DEV_REPO_ROOT/out"   # not build/: ./build is the shim
 X240_UF2="$X240_QMK_HOME/.build/${X240_KB}_${X240_KM}.uf2"
 X240_TOOLS=(matrix_probe ps2_sniffer shift_register_test)
@@ -204,6 +208,39 @@ x240_build_cad() {
   return $rc
 }
 
+# Generate, route, check and export the Rev B board. Every KiCad step runs in the kicad
+# image; routing runs in the freerouting image. Outputs land in out/pcb; the generated
+# .kicad_sch/.kicad_pcb are written back into hardware/pcb (they are committed).
+x240_kicad() {
+  docker run --rm "$(x240_docker_tty)" -v "$X240_PCB_DIR":/pcb -v "$X240_OUT/pcb":/out -w /pcb "$X240_KICAD_IMAGE" sh -c "$*"
+}
+
+x240_build_pcb() {
+  x240_require_docker
+  local out="$X240_OUT/pcb" passes="${X240_ROUTE_PASSES:-100}"
+  mkdir -p "$out"
+  log_info "build: pcb — schematic from netlist_model.py, ERC"
+  x240_kicad "python3 gen_schematic.py /pcb && kicad-cli sch erc --severity-error --exit-code-violations -o /out/erc.rpt $X240_PCB.kicad_sch" \
+    || { log_error "build: pcb ERC has errors (out/pcb/erc.rpt)"; return 1; }
+  x240_kicad "kicad-cli sch export pdf -o /out/schematic.pdf $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export netlist -o /out/$X240_PCB.net $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export bom -o /out/bom.csv --fields 'Reference,Value,Footprint,\${QUANTITY}' --group-by Value,Footprint $X240_PCB.kicad_sch >/dev/null"
+  log_info "build: pcb — board from netlist_model.py, placement DRC"
+  x240_kicad "python3 gen_pcb.py /pcb 2>/dev/null && kicad-cli pcb drc --severity-error --exit-code-violations -o /out/drc-placement.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1 || { kicad-cli pcb drc --severity-error -o /out/drc-placement.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1; grep -c '^\[' /out/drc-placement.rpt; }"
+  if [[ "${X240_SKIP_ROUTE:-}" != "1" ]]; then
+    log_info "build: pcb — autoroute (freerouting, $passes passes; X240_SKIP_ROUTE=1 to skip)"
+    x240_kicad "python3 route_pcb.py export $X240_PCB.kicad_pcb /out/$X240_PCB.dsn 2>/dev/null"
+    docker run --rm "$(x240_docker_tty)" -v "$out":/w --entrypoint java "$X240_FREEROUTING_IMAGE" \
+      -jar /app/freerouting-executable.jar -de "/w/$X240_PCB.dsn" -do "/w/$X240_PCB.ses" -mp "$passes" -oit 0.5 2>&1 | grep -E 'passes|unrouted|routed|incomplete|Routing' | tail -3 || true
+    [[ -s "$out/$X240_PCB.ses" ]] || { log_error "build: pcb — freerouting produced no session file"; return 1; }
+    x240_kicad "python3 route_pcb.py import $X240_PCB.kicad_pcb /out/$X240_PCB.ses 2>/dev/null"
+  fi
+  log_info "build: pcb — DRC on the routed board"
+  x240_kicad "kicad-cli pcb drc --severity-error --exit-code-violations -o /out/drc.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1" \
+    || { log_error "build: pcb DRC has errors (out/pcb/drc.rpt)"; grep -E '^\[|unconnected' "$out/drc.rpt" | head -8; return 1; }
+  log_info "build: pcb — fab outputs"
+  x240_kicad "mkdir -p /out/gerbers && kicad-cli pcb export gerbers -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export drill -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pos -o /out/$X240_PCB-pos.csv --format csv --units mm $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pdf -o /out/board.pdf --layers F.Cu,B.Cu,F.Silkscreen,Edge.Cuts $X240_PCB.kicad_pcb >/dev/null && cd /out/gerbers && zip -q -r ../gerbers.zip ."
+  print_success "build: $out (schematic.pdf, board.pdf, gerbers.zip, bom.csv, $X240_PCB-pos.csv)"
+}
+
 project_build() {
   local what="${DEV_ARGS[0]:-firmware}"
   case "$what" in
@@ -211,8 +248,9 @@ project_build() {
     docs)     x240_build_docs ;;
     tools)    x240_build_tools ;;
     cad)      x240_build_cad ;;
-    all)      x240_build_tools && x240_build_firmware && x240_build_docs && x240_build_cad ;;
-    *) log_error "build: unknown target '$what' (firmware|docs|tools|cad|all)"; exit 2 ;;
+    pcb)      x240_build_pcb ;;
+    all)      x240_build_tools && x240_build_firmware && x240_build_docs && x240_build_cad && x240_build_pcb ;;
+    *) log_error "build: unknown target '$what' (firmware|docs|tools|cad|pcb|all)"; exit 2 ;;
   esac
 }
 
