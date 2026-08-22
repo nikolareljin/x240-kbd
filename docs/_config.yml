@@ -9,6 +9,18 @@ remote_theme: just-the-docs/just-the-docs
 plugins:
   - jekyll-remote-theme
   - jekyll-seo-tag
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: false
+
+# remote_theme does not merge the theme's own config, so the layout must be set here.
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
 
 color_scheme: light
 search_enabled: true
@@ -35,6 +47,7 @@ footer_content: 'GPL-2.0. Design status: not yet built — pinout and TrackPoint
 
 # Maintainer-only pages stay in the repo but off the site.
 exclude:
+  - README.md
   - project-structure.md
   - design-instructions.md
   - code-instructions.md
