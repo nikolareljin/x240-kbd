@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Shim: ./test == ./dev test. See scripts/cli.sh for the full verb set.
+exec bash "$(dirname "$0")/scripts/cli.sh" test "$@"
