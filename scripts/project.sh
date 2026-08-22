@@ -233,7 +233,11 @@ x240_build_pcb() {
   log_info "build: pcb — schematic from netlist_model.py, ERC"
   x240_kicad "python3 gen_schematic.py /pcb && kicad-cli sch erc --severity-error --exit-code-violations -o /out/erc.rpt $X240_PCB.kicad_sch" \
     || { log_error "build: pcb ERC has errors (out/pcb/erc.rpt)"; return 1; }
-  x240_kicad "kicad-cli sch export pdf -o /out/schematic.pdf $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export netlist -o /out/$X240_PCB.net $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export bom -o /out/bom.csv --fields 'Reference,Value,Footprint,\${QUANTITY}' --group-by Value,Footprint $X240_PCB.kicad_sch >/dev/null"
+  # The field list is quoted once, inside the sh -c string, so ${QUANTITY} must reach
+  # kicad-cli literally: the outer double quotes need \$ to stop bash expanding it here.
+  x240_kicad "kicad-cli sch export pdf -o /out/schematic.pdf $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export netlist -o /out/$X240_PCB.net $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export bom -o /out/bom.csv --fields Reference,Value,Footprint,\\\${QUANTITY} --group-by Value,Footprint $X240_PCB.kicad_sch >/dev/null" \
+    || { log_error "build: pcb — schematic PDF/netlist/BOM export failed"; return 1; }
+  grep -q 'Qty\|QUANTITY' "$out/bom.csv" || { log_error "build: pcb — bom.csv has no quantity column (field escaping)"; return 1; }
   log_info "build: pcb — board from netlist_model.py, placement DRC"
   x240_kicad_py "gen_pcb.py /pcb" || { log_error "build: pcb — gen_pcb.py failed (see above)"; return 1; }
   x240_kicad "kicad-cli pcb drc --severity-error --format json -o /out/drc-placement.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
@@ -273,7 +277,12 @@ PYEOF
     fi
   fi
   log_info "build: pcb — fab outputs"
-  x240_kicad "mkdir -p /out/gerbers && kicad-cli pcb export gerbers -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export drill -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pos -o /out/$X240_PCB-pos.csv --format csv --units mm $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pdf -o /out/board.pdf --layers F.Cu,B.Cu,F.Silkscreen,Edge.Cuts $X240_PCB.kicad_pcb >/dev/null && cd /out/gerbers && zip -q -r ../gerbers.zip ."
+  x240_kicad "mkdir -p /out/gerbers && kicad-cli pcb export gerbers -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export drill -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pos -o /out/$X240_PCB-pos.csv --format csv --units mm $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pdf -o /out/board.pdf --layers F.Cu,B.Cu,F.Silkscreen,Edge.Cuts $X240_PCB.kicad_pcb >/dev/null && cd /out/gerbers && zip -q -r ../gerbers.zip ." \
+    || { log_error "build: pcb — fab export failed (gerbers/drill/pos/pdf/zip)"; return 1; }
+  local f
+  for f in schematic.pdf board.pdf gerbers.zip bom.csv "$X240_PCB-pos.csv"; do
+    [[ -s "$out/$f" ]] || { log_error "build: pcb — expected artifact missing: $f"; return 1; }
+  done
   print_success "build: $out (schematic.pdf, board.pdf, gerbers.zip, bom.csv, $X240_PCB-pos.csv)"
 }
 
