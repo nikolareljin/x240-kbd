@@ -47,7 +47,9 @@ ClickPad + TrackPoint guest  ──PS/2──►  GP21 DATA / GP22 CLK
          → synaptics.c (custom pointing driver) assembles 6-byte packets
             ├─ W != 3 : touchpad frame  → finger delta, L/R from byte 0    synaptics.c
             └─ W == 3 : guest frame     → TrackPoint 3-byte packet          trackpoint.c
-               → pointing_device_task_kb() merges into one report_mouse_t   x240_pico.c
+               → both add into one report_mouse_t inside                    synaptics.c
+                 pointing_device_driver_get_report()
+                  → pointing_device_task_kb() passes it through              x240_pico.c
                   → USB HID mouse report
 ```
 
@@ -63,7 +65,7 @@ Never a silent success.
 | `keyboard_post_init_kb` | LED and power-button GPIO setup | keymap logic |
 | `pointing_device_driver_init` | Synaptics init; failures logged on the console | matrix |
 | `matrix_scan_kb` | power-button timing only | side effects on the matrix |
-| `pointing_device_task_kb` | merging touchpad + TrackPoint, axis inversion | raw PS/2 reads |
+| `pointing_device_task_kb` | pass-through only (merge and Y inversion happen in the driver) | pointing logic |
 | `process_record_user` | `CK_BKLT`, `CK_FNLK` | hardware polling |
 
 ## Build
