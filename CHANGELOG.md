@@ -137,6 +137,7 @@ with its source.
 
 ### Added
 
+- A realistic product representation image of the completed standalone keyboard (`docs/images/x240_keyboard_completed.png`) to serve as the main product visual.
 - `docs/hardware/` — components, BOM & cost, GPIO budget, 74HC165 sense chain, TrackPoint,
   backlight, PCB (Rev A vs Rev B).
 - `docs/firmware/` — architecture, QMK configuration reference, pointing stack.
@@ -149,6 +150,7 @@ with its source.
 
 ### Changed
 
+- `README.md` and `docs/index.md` modified to feature the new product representation image.
 - `README.md`, `BOM.md`, `PLAN.md`, `ASSEMBLY.md`, `hardware/wiring/wiring_diagram.md`,
   `hardware/pinout/*.md`, and the maintainer docs under `docs/` rewritten for the
   corrected design. `hardware/wiring/wiring_diagram.md` is now the single authoritative

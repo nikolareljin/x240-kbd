@@ -7,6 +7,8 @@ keyboard assembly (FRU 0C44020) and its Synaptics ClickPad, driven by a Raspberr
 Works on **any OS without drivers** — it enumerates as a standard USB HID composite device
 (keyboard + mouse + media keys).
 
+![Standalone X240 Keyboard](docs/images/x240_keyboard_completed.png)
+
 > **Project status: design, not yet built.** The matrix pinout is unverified until the
 > probing step runs on real hardware, and the TrackPoint route (via the ClickPad's PS/2
 > pass-through) is the expected architecture, confirmed by the same step. Everything else

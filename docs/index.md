@@ -9,6 +9,8 @@ A standalone USB keyboard with touchpad **and TrackPoint**, built from a ThinkPa
 keyboard assembly (FRU 0C44020) and its Synaptics ClickPad, driven by a Raspberry Pi Pico
 running QMK. No drivers on any OS — it is a plain USB HID composite device.
 
+![Standalone X240 Keyboard](images/x240_keyboard_completed.png)
+
 {: .warning }
 > **Status: designed, not yet built.** Two things are decided only by measurement:
 > the keyboard's matrix pinout, and whether the TrackPoint rides the ClickPad's PS/2
