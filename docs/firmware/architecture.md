@@ -19,7 +19,7 @@ and are corrected there.
 | `matrix.c` | Drive-line sequencing and the 74HC165 chain read | **new** |
 | `synaptics.c` / `.h` | The custom pointing-device driver: ClickPad reset/identify/capabilities, mode byte, guest enable, 6-byte packet parser with resync, touchpad delta, logged relative-mode fallback | **new** |
 | `trackpoint.c` / `.h` | Guest (pass-through) frame decode, TrackPoint delta and scaling | **new** |
-| `x240_pico.c` | `keyboard_post_init_kb` (LED on, power-button pull-up), `matrix_scan_kb` (power-button long-press guard), `pointing_device_task_kb` (merges the two pointing sources) | exists |
+| `x240_pico.c` | `keyboard_post_init_kb` (LED on, power-button pull-up), `matrix_scan_kb` (power-button long-press guard), `pointing_device_task_kb` (pass-through; merge happens in `synaptics.c`) | exists |
 | `x240_pico.h` | `LAYOUT` macro, custom keycodes `CK_BKLT`/`CK_FNLK`, layer enum | exists; `LAYOUT` regenerated from the measured matrix |
 | `keymaps/default/keymap.c` | `_BASE` and `_FN` layers, `process_record_user` | exists; regenerated from the measured matrix |
 
