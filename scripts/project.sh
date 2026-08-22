@@ -119,7 +119,12 @@ x240_build_firmware() {
 
 x240_build_docs() {
   log_info "build: docs site in $X240_JEKYLL_IMAGE"
-  x240_jekyll "$X240_OUT/site" "bundle install --quiet >/dev/null 2>&1; bundle exec jekyll build -d /out 2>&1 | grep -vE 'DEPRECATION|sass-lang|^\s*[╷╵│]|^\s*[0-9]+ │|\^\^|repetitive|verbose|color-functions|^\s*$'"
+  # The output dir is emptied inside the container (its files are container-owned), so a
+  # stale index.html from an earlier run cannot pass for a fresh build. pipefail keeps
+  # jekyll's exit status through the grep that trims Sass deprecation noise; grep's own
+  # status is ignored since "nothing to print" is the good case.
+  x240_jekyll "$X240_OUT/site" "set -o pipefail; rm -rf /out/* /out/.[!.]* 2>/dev/null; bundle install --quiet >/dev/null 2>&1 && { bundle exec jekyll build -d /out 2>&1 | { grep -vE 'DEPRECATION|sass-lang|^\s*[╷╵│]|^\s*[0-9]+ │|\^\^|repetitive|verbose|color-functions|^\s*$' || true; }; }" \
+    || { log_error "docs build failed (jekyll exit status above)"; return 1; }
   if [[ -f "$X240_OUT/site/index.html" ]]; then print_success "build: $X240_OUT/site"; else log_error "docs build produced no index.html"; return 1; fi
 }
 

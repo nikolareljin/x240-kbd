@@ -16,10 +16,12 @@ reference implementation: Linux `drivers/input/mouse/synaptics.c`.
 QMK vendor PS/2 driver  (PIO0, GP21/GP22)     — bytes in, commands out
         │
 synaptics.c                                   — identify, mode, 6-byte packet parser
-        ├──► touchpad path   → dx, dy, buttons
-        └──► trackpoint.c    → dx, dy, buttons  (from W == 3 guest frames)
+        ├──► touchpad path   → dx, dy, buttons   (scaled, Y inverted once)
+        └──► trackpoint.c    → dx, dy, buttons   (from W == 3 guest frames)
                     │
-x240_pico.c : pointing_device_task_kb()       — merge, scale, invert → report_mouse_t
+        both add into one report_mouse_t inside pointing_device_driver_get_report()
+                    │
+x240_pico.c : pointing_device_task_kb()       — pass-through, no pointing logic
 ```
 
 `synaptics.c` is QMK's **custom pointing-device driver** (`POINTING_DEVICE_DRIVER =
