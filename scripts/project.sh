@@ -42,6 +42,8 @@ x240_require_docker() {
 x240_docker_tty() { [[ -t 0 && -t 1 ]] && printf -- '-it' || printf -- '-i'; }
 
 # Run a shell command inside the QMK image with the checkout and this keyboard mounted.
+# The bind-mounted checkout is owned by the host user, so git inside the container needs
+# it marked safe; only the checkout and its lib/* submodules are whitelisted, not '*'.
 x240_qmk() {
   x240_require_docker
   [[ -f "$X240_QMK_HOME/Makefile" ]] || { log_error "no qmk_firmware checkout at $X240_QMK_HOME — run ./dev install"; exit 1; }
@@ -49,7 +51,7 @@ x240_qmk() {
     -v "$X240_QMK_HOME":/qmk_firmware \
     -v "$X240_KB_DIR":/qmk_firmware/keyboards/$X240_KB \
     -w /qmk_firmware "$X240_QMK_IMAGE" sh -c \
-    "git config --global --add safe.directory '*' >/dev/null 2>&1; qmk config user.qmk_home=/qmk_firmware >/dev/null 2>&1; $*"
+    "for d in /qmk_firmware /qmk_firmware/lib/*; do git config --global --add safe.directory \"\$d\" >/dev/null 2>&1; done; qmk config user.qmk_home=/qmk_firmware >/dev/null 2>&1; $*"
 }
 
 # Run a shell command inside the Jekyll image with docs/ mounted; $1 is the output dir.
