@@ -17,6 +17,10 @@ import sys
 
 import pcbnew
 
+USAGE = "usage: route_pcb.py export <pcb> <dsn> | import <pcb> <ses> | pour <pcb> -"
+
+if len(sys.argv) != 4 or sys.argv[1] not in ("export", "import", "pour"):
+    sys.exit(USAGE)
 cmd, pcb, other = sys.argv[1], sys.argv[2], sys.argv[3]
 board = pcbnew.LoadBoard(pcb)
 
@@ -61,4 +65,4 @@ elif cmd == "pour":
     pcbnew.SaveBoard(pcb, board)
     print("ground pour added")
 else:
-    sys.exit("usage: route_pcb.py export|import <pcb> <dsn|ses>")
+    sys.exit(USAGE)

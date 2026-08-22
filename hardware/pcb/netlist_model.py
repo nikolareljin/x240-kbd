@@ -102,17 +102,14 @@ for u, rna, rnb in chain:
     for k, dpin in enumerate(D_PINS):
         rn, el = (rna, k) if k < 4 else (rnb, k - 4)
         # R_Pack04: isolated resistors, pins (1,8) (2,7) (3,6) (4,5)
-        net(f"SENSE{sense}", (u, dpin), (rn, el + 1), ("J4", 2 * (sense + 1) if sense < 10 else 20 + 2 * (sense - 10) + 1 if sense < 17 else 34 - 0))  # placeholder, fixed below
+        net(f"SENSE{sense}", (u, dpin), (rn, el + 1))
         net("+3V3", (rn, 8 - el))
         sense += 1
-# J_MAT pin plan (2x17 = 34 pins): odd 1..19 = DRV0..9 ; even 2..20 = SENSE0..9 ; 21..34 = SENSE10..23
-# rebuild the J4 assignment cleanly:
-for name in list(NETS):
-    if name.startswith("SENSE"):
-        NETS[name] = [p for p in NETS[name] if p[0] != "J4"]
-for s in range(24):
-    pin = 2 * (s + 1) if s < 10 else 21 + (s - 10)
-    net(f"SENSE{s}", ("J4", pin))
+# J_MAT pin plan (2x17 = 34 pins): odd 1..19 = DRV0..9, even 2..20 = SENSE0..9,
+# 21..30 = SENSE10..19, 31 BL_N, 32 BL_P, 33 PWR_BTN, 34 GND.  SENSE20..23 are pulled up
+# but not headered in Rev B (docs/hardware/pcb.md): the documented matrices need <= 20.
+for s in range(20):
+    net(f"SENSE{s}", ("J4", 2 * (s + 1) if s < 10 else 21 + (s - 10)))
 # chain control
 net("SENSE_PL", ("U1", PICO["GP17"]), ("U2", 1), ("U3", 1), ("U4", 1))
 net("SENSE_CP", ("U1", PICO["GP18"]), ("U2", 2), ("U3", 2), ("U4", 2))
@@ -151,10 +148,6 @@ net("BL_P", ("R7", 2), ("J4", 32))
 net("GP27", ("U1", PICO["GP27"]), ("R8", 1))
 net("PWR_BTN", ("R8", 2), ("J4", 33))
 net("GND", ("J4", 34))
-# J_MAT pins 21..34: SENSE10..23 occupy 21..34?  No: 21..30 = SENSE10..19 (10 pins), then BL_N 31, BL_P 32, PWR 33, GND 34.
-# SENSE20..23 therefore go to J6? -> keep the matrix header honest: move them to a second row.
-for s in range(20, 24):
-    NETS[f"SENSE{s}"] = [p for p in NETS[f"SENSE{s}"] if p[0] != "J4"]
 # reset and USB-C pads
 net("RUN", ("U1", PICO["RUN"]), ("SW1", 1)); net("GND", ("SW1", 2))
 net("VBUS", ("J7", 4)); net("GND", ("J7", 1))
