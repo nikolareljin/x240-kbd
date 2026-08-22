@@ -22,8 +22,15 @@ PROJECT = "x240_pico_rev_b"
 ROOT_UUID = "0f3b1796-fc9b-41f1-a39b-000000000001"   # stable: instances path must not churn
 
 
+_UID_NS = uuid.UUID("0f3b1796-fc9b-41f1-a39b-89554776f7dc")
+_uid_n = 0
+
+
 def uid():
-    return str(uuid.uuid4())
+    """Deterministic UUIDs: the file must not change unless the model does."""
+    global _uid_n
+    _uid_n += 1
+    return str(uuid.uuid5(_UID_NS, f"x240:{_uid_n}"))
 
 
 # ------------------------------------------------------------------ s-expression helpers
