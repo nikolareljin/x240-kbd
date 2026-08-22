@@ -8,6 +8,8 @@ All notable project changes should be recorded here.
   keyboard-level GP27 polling with the existing long-press guard.
 - Added a full `docs/` documentation set covering project structure, design rules,
   coding instructions, and the build/test workflow.
+- Added illustrated connector wiring diagrams for the USB-C breakout upgrade path and FPC ZIF connection.
+- Updated README.md, PLAN.md, ASSEMBLY.md, and hardware/wiring/wiring_diagram.md to reference the new diagrams.
 - Updated the README to link the new documentation and clarify repository layout.
 - Expanded `.gitignore` for QMK build outputs, Python caches, OpenSCAD exports,
   local QMK checkouts, and transient hardware capture files.

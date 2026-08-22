@@ -25,6 +25,9 @@ pin before connecting it to the Pico.
 2. Insert the keyboard FPC ribbon cable with the contact side facing the correct
    direction (check your specific breakout's datasheet — typically film/blue side up).
 3. Close the locking tab.
+
+![FPC Ribbon Cable and ZIF Breakout Board Connection](docs/images/fpc_zif_wiring.png)
+
 4. Install CircuitPython on the Pico (drag `.uf2` from circuitpython.org to RPI-RP2).
 5. Copy `tools/matrix_probe/matrix_probe.py` to the `CIRCUITPY` drive, rename to
    `code.py`.
