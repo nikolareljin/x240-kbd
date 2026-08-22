@@ -67,3 +67,13 @@ docs/.sass-cache/
 
 # ./dev artifacts
 out/
+
+# KiCad generated/intermediate files (the .kicad_sch/.kicad_pcb themselves are committed)
+hardware/pcb/out/
+hardware/pcb/erc.rpt
+hardware/pcb/*.dsn
+hardware/pcb/*.ses
+hardware/pcb/*-backups/
+hardware/pcb/fp-info-cache
+hardware/pcb/*.kicad_prl
+hardware/pcb/_autosave-*

@@ -36,7 +36,7 @@ done
 
 command -v docker >/dev/null 2>&1 || { log_error "docker is required"; exit 1; }
 
-images=(QMK JEKYLL OPENSCAD)
+images=(QMK JEKYLL OPENSCAD KICAD FREEROUTING)
 
 if [[ -n "$load_dir" ]]; then
   for n in "${images[@]}"; do
@@ -76,6 +76,10 @@ if $verify; then
   echo "qmk:      $(docker run --rm "$QMK_IMAGE" sh -c 'qmk --version; arm-none-eabi-gcc --version | head -1' | paste -sd' ')"
   echo "jekyll:   $(docker run --rm "$JEKYLL_IMAGE" jekyll --version 2>/dev/null)"
   echo "openscad: $(docker run --rm "$OPENSCAD_IMAGE" openscad --version 2>&1 | head -1)"
+  echo "kicad:    $(docker run --rm "$KICAD_IMAGE" kicad-cli version 2>/dev/null)"
+  # best-effort: the banner format is not a contract, and under pipefail a non-match must not abort --verify
+  fr_ver="$(docker run --rm --entrypoint java "$FREEROUTING_IMAGE" -jar /app/freerouting-executable.jar --version 2>&1 | grep -o 'Freerouting v[0-9.]*' | head -1 || true)"
+  echo "freerouting: ${fr_ver:-(version banner not recognised)}"
   echo "qmk_firmware ref: $QMK_FIRMWARE_REF"
 fi
 print_success "toolchain ready"

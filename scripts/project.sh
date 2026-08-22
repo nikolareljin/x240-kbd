@@ -10,7 +10,7 @@
 # not be edited; this file is where the verbs get their meaning.
 #
 #   ./dev install                    submodules, docker images, qmk_firmware checkout
-#   ./dev build [firmware|docs|tools|cad|all]
+#   ./dev build [firmware|docs|tools|cad|pcb|all]
 #   ./dev test                       host pytest, py_compile, link check, shellcheck
 #   ./dev preflight                  test + build all (what CI runs)
 #   ./dev deploy [firmware|<tool>]   copy the UF2 to RPI-RP2, or a tool to CIRCUITPY
@@ -33,6 +33,10 @@ X240_QMK_HOME="${QMK_HOME:-$DEV_REPO_ROOT/qmk_firmware}"
 X240_QMK_IMAGE="${QMK_DOCKER_IMAGE:-$QMK_IMAGE}"
 X240_JEKYLL_IMAGE="${JEKYLL_DOCKER_IMAGE:-$JEKYLL_IMAGE}"
 X240_OPENSCAD_IMAGE="${OPENSCAD_DOCKER_IMAGE:-$OPENSCAD_IMAGE}"
+X240_KICAD_IMAGE="${KICAD_DOCKER_IMAGE:-$KICAD_IMAGE}"
+X240_FREEROUTING_IMAGE="${FREEROUTING_DOCKER_IMAGE:-$FREEROUTING_IMAGE}"
+X240_PCB_DIR="$DEV_REPO_ROOT/hardware/pcb"
+X240_PCB="x240_pico_rev_b"
 X240_OUT="$DEV_REPO_ROOT/out"   # not build/: ./build is the shim
 X240_UF2="$X240_QMK_HOME/.build/${X240_KB}_${X240_KM}.uf2"
 X240_TOOLS=(matrix_probe ps2_sniffer shift_register_test)
@@ -56,7 +60,7 @@ x240_clone_qmk() {
   git -C "$X240_QMK_HOME" submodule update -q --init --recursive --depth 1 --jobs 8
 }
 
-# Run a shell command inside the QMK image with the checkout and this keyboard mounted.
+# Run ONE shell command string inside the QMK image with the checkout and this keyboard mounted.
 # The bind-mounted checkout is owned by the host user, so git inside the container needs
 # it marked safe; only the checkout and its lib/* submodules are whitelisted, not '*'.
 x240_qmk() {
@@ -66,17 +70,17 @@ x240_qmk() {
     -v "$X240_QMK_HOME":/qmk_firmware \
     -v "$X240_KB_DIR":/qmk_firmware/keyboards/$X240_KB \
     -w /qmk_firmware "$X240_QMK_IMAGE" sh -c \
-    "for d in /qmk_firmware /qmk_firmware/lib/*; do git config --global --add safe.directory \"\$d\" >/dev/null 2>&1; done; qmk config user.qmk_home=/qmk_firmware >/dev/null 2>&1; $*"
+    "for d in /qmk_firmware /qmk_firmware/lib/*; do git config --global --add safe.directory \"\$d\" >/dev/null 2>&1; done; qmk config user.qmk_home=/qmk_firmware >/dev/null 2>&1; $1"
 }
 
-# Run a shell command inside the Jekyll image with docs/ mounted; $1 is the output dir.
+# Run ONE shell command string inside the Jekyll image with docs/ mounted; $1 is the output dir, $2 the command.
 x240_jekyll() {
   x240_require_docker
   local out="$1"; shift
   mkdir -p "$out" "$X240_OUT/.bundle"
   docker run --rm "$(x240_docker_tty)" -e JEKYLL_ENV=production \
     -v "$DEV_REPO_ROOT/docs":/srv/jekyll -v "$out":/out -v "$X240_OUT/.bundle":/usr/local/bundle \
-    -w /srv/jekyll "$X240_JEKYLL_IMAGE" sh -c "$*"
+    -w /srv/jekyll "$X240_JEKYLL_IMAGE" sh -c "$1"
 }
 
 # Find a mounted drive by volume label (RPI-RP2, CIRCUITPY) on Linux or macOS.
@@ -204,6 +208,98 @@ x240_build_cad() {
   return $rc
 }
 
+# Generate, route, check and export the Rev B board. Every KiCad step runs in the kicad
+# image; routing runs in the freerouting image. Outputs land in out/pcb; the generated
+# .kicad_sch/.kicad_pcb are written back into hardware/pcb (they are committed).
+# Run one of the Python generators inside the KiCad image and return ITS exit status:
+# output goes to a log first, the debug build's 'm_group == nullptr' assert noise is
+# filtered out of the log afterwards, so neither a pipeline nor grep's own status can
+# mask a failure or fake one.
+x240_kicad_py() {
+  x240_kicad "python3 $1 >/tmp/py.log 2>&1; rc=\$?; grep -v 'm_group == nullptr' /tmp/py.log || true; exit \$rc"
+}
+
+# Runs as the invoking user: the image's own uid (1000) only matches by luck, and in CI the
+# checkout belongs to uid 1001, so the generated files could not be written there.
+x240_kicad() {
+  docker run --rm "$(x240_docker_tty)" --user "$(id -u):$(id -g)" -e HOME=/tmp -e XDG_CONFIG_HOME=/tmp/.config \
+    -v "$X240_PCB_DIR":/pcb -v "$X240_OUT/pcb":/out -w /pcb "$X240_KICAD_IMAGE" sh -c "$1"
+}
+
+x240_build_pcb() {
+  x240_require_docker
+  local out="$X240_OUT/pcb" passes="${X240_ROUTE_PASSES:-100}"
+  mkdir -p "$out"
+  log_info "build: pcb — schematic from netlist_model.py, ERC"
+  x240_kicad "python3 gen_schematic.py /pcb && kicad-cli sch erc --severity-error --exit-code-violations -o /out/erc.rpt $X240_PCB.kicad_sch" \
+    || { log_error "build: pcb ERC has errors (out/pcb/erc.rpt)"; return 1; }
+  # The field list is quoted once, inside the sh -c string, so ${QUANTITY} must reach
+  # kicad-cli literally: the outer double quotes need \$ to stop bash expanding it here.
+  x240_kicad "kicad-cli sch export pdf -o /out/schematic.pdf $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export netlist -o /out/$X240_PCB.net $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export bom -o /out/bom.csv --fields Reference,Value,Footprint,\\\${QUANTITY} --group-by Value,Footprint $X240_PCB.kicad_sch >/dev/null" \
+    || { log_error "build: pcb — schematic PDF/netlist/BOM export failed"; return 1; }
+  grep -qE 'Qty|QUANTITY' "$out/bom.csv" || { log_error "build: pcb — bom.csv has no quantity column (field escaping)"; return 1; }
+  log_info "build: pcb — board from netlist_model.py, placement DRC"
+  x240_kicad_py "gen_pcb.py /pcb" || { log_error "build: pcb — gen_pcb.py failed (see above)"; return 1; }
+  x240_kicad "kicad-cli pcb drc --severity-error --format json -o /out/drc-placement.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
+  # The board is unrouted here, so open connections are expected; any other error-severity
+  # violation (overlapping courtyards, shorts, keepouts) is a placement bug and stops the build.
+  if ! python3 - "$out/drc-placement.json" <<'PYEOF'
+import json, sys
+d = json.load(open(sys.argv[1]))
+bad = [v for v in d["violations"] if v["severity"] == "error"]
+for v in bad[:10]:
+    print("     ", v["type"], "|", v["description"][:70], "|", [i.get("description", "")[:36] for i in v["items"]])
+sys.exit(1 if bad else 0)
+PYEOF
+  then log_error "build: pcb — placement DRC has errors (out/pcb/drc-placement.json)"; return 1; fi
+  if [[ "${X240_SKIP_ROUTE:-}" != "1" ]]; then
+    # One route, once.  -mt 1 pins the optimizer to a single thread: with the default pool
+    # (logical processors - 1) the same board routes differently on every machine, and CI
+    # stranded twice the connections a local run of the same commit did.  Single-threaded,
+    # two runs of the same DSN produce byte-identical sessions.
+    #
+    # There is deliberately no retry: re-routing exports the previous attempt's tracks as
+    # protected wiring freerouting will not rip up, so a half-finished net stays half
+    # finished and every extra round strands more of them (issue #62).
+    log_info "build: pcb — autoroute (freerouting, $passes passes, single-threaded; X240_SKIP_ROUTE=1 to skip)"
+    x240_kicad_py "route_pcb.py export $X240_PCB.kicad_pcb /out/$X240_PCB.dsn" || { log_error "build: pcb — DSN export failed"; return 1; }
+    rm -f "$out/$X240_PCB.ses"
+    docker run --rm "$(x240_docker_tty)" -v "$out":/w --entrypoint java "$X240_FREEROUTING_IMAGE" \
+      -jar /app/freerouting-executable.jar -de "/w/$X240_PCB.dsn" -do "/w/$X240_PCB.ses" -mp "$passes" -mt 1 -oit 0.5 2>&1 | grep -E 'Auto-routing stage completed' | sed -E 's/.*completed in/   routed in/' || true
+    # That line is freerouting's own account of its work, and it is not the gate: it has
+    # reported "0 unrouted" while emitting nothing at all for five connections (#62).
+    # Only KiCad's DRC below decides whether the board is routed.
+    [[ -s "$out/$X240_PCB.ses" ]] || { log_error "build: pcb — freerouting produced no session file"; return 1; }
+    x240_kicad_py "route_pcb.py import $X240_PCB.kicad_pcb /out/$X240_PCB.ses" || { log_error "build: pcb — SES import failed"; return 1; }
+    x240_kicad "kicad-cli pcb drc --severity-error --format json -o /out/drc.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
+    # Shorts, clearance and keepout violations are rule or placement faults, not bad luck.
+    if ! python3 - "$out/drc.json" <<'PYSCRIPT'
+import json, sys
+d = json.load(open(sys.argv[1]))
+bad = [v for v in d["violations"] if v["severity"] == "error"]
+for v in bad[:10]:
+    print("     ", v["type"], "|", v["description"][:70], "|", [i.get("description", "")[:36] for i in v["items"]])
+sys.exit(1 if bad else 0)
+PYSCRIPT
+    then log_error "build: pcb — routed board has DRC errors (out/pcb/drc.json)"; return 1; fi
+    local left
+    left="$(python3 -c "import json;d=json.load(open('$out/drc.json'));print(len(d['unconnected_items']))")"
+    if [[ "$left" != "0" ]]; then
+      log_error "build: pcb — $left connection(s) left unrouted by freerouting; no fab outputs"
+      python3 -c "import json;d=json.load(open('$out/drc.json'));[print('     ', ' <-> '.join(i.get('description','')[:40] for i in u['items'])) for u in d['unconnected_items'][:10]]"
+      return 1
+    fi
+  fi
+  log_info "build: pcb — fab outputs"
+  x240_kicad "mkdir -p /out/gerbers && kicad-cli pcb export gerbers -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export drill -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pos -o /out/$X240_PCB-pos.csv --format csv --units mm $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pdf -o /out/board.pdf --layers F.Cu,B.Cu,F.Silkscreen,Edge.Cuts $X240_PCB.kicad_pcb >/dev/null && cd /out/gerbers && zip -q -r ../gerbers.zip ." \
+    || { log_error "build: pcb — fab export failed (gerbers/drill/pos/pdf/zip)"; return 1; }
+  local f
+  for f in schematic.pdf board.pdf gerbers.zip bom.csv "$X240_PCB-pos.csv"; do
+    [[ -s "$out/$f" ]] || { log_error "build: pcb — expected artifact missing: $f"; return 1; }
+  done
+  print_success "build: $out (schematic.pdf, board.pdf, gerbers.zip, bom.csv, $X240_PCB-pos.csv)"
+}
+
 project_build() {
   local what="${DEV_ARGS[0]:-firmware}"
   case "$what" in
@@ -211,8 +307,9 @@ project_build() {
     docs)     x240_build_docs ;;
     tools)    x240_build_tools ;;
     cad)      x240_build_cad ;;
-    all)      x240_build_tools && x240_build_firmware && x240_build_docs && x240_build_cad ;;
-    *) log_error "build: unknown target '$what' (firmware|docs|tools|cad|all)"; exit 2 ;;
+    pcb)      x240_build_pcb ;;
+    all)      x240_build_tools && x240_build_firmware && x240_build_docs && x240_build_cad && x240_build_pcb ;;
+    *) log_error "build: unknown target '$what' (firmware|docs|tools|cad|pcb|all)"; exit 2 ;;
   esac
 }
 

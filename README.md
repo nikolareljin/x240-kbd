@@ -92,7 +92,7 @@ Docker, so the host needs only `docker`, `git` and `python3`):
 
 ```bash
 ./dev install            # submodules, docker images, a shallow qmk_firmware checkout
-./dev build [firmware|docs|tools|cad|all]
+./dev build [firmware|docs|tools|cad|pcb|all]
 ./dev test               # host pytest for the tools, link check, shellcheck
 ./dev preflight          # everything CI runs: test + build all
 ./dev deploy             # copy the UF2 to the Pico's RPI-RP2 drive  (alias: ./flash)

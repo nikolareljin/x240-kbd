@@ -63,6 +63,18 @@ tolerance report. The split-joint interference check runs in `./dev test`.
 Hand-made: E1 base cover or another variant. Then the assembly order in
 `docs/enclosure/presentation.md`.
 
+## 7b. Rev B PCB (M7)
+
+`./dev build pcb`: schematic and board are generated from `hardware/pcb/netlist_model.py`,
+ERC and placement DRC must be clean, freerouting routes it once (`X240_ROUTE_PASSES`,
+default 100; `X240_SKIP_ROUTE=1` to skip; single-threaded, so the same DSN always yields
+the same session), DRC on the routed board must be clean *and* report no unconnected
+items — freerouting's own "unrouted" count is not the gate, it has claimed success while
+abandoning connections (#62) — then gerbers,
+drill, position file, BOM and PDFs land in `out/pcb/`. Upload `out/pcb/gerbers.zip` to
+JLCPCB/PCBWay. The Rev B board is *jumpered*: the FPC lines and the matrix lines meet on
+adjacent headers and are wired after probing — see `docs/hardware/pcb.md`.
+
 ## 8. Acceptance (M8)
 
 Every line in the README's verification checklist passes with the case closed, on three

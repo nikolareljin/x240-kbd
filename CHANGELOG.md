@@ -4,6 +4,25 @@ All notable project changes should be recorded here.
 
 ## Unreleased
 
+### Rev B PCB (milestone M7, issues #49 #50 #51)
+
+- `hardware/pcb/` is a **generated** KiCad 9 project: `netlist_model.py` describes parts,
+  library names and 110 nets; `gen_schematic.py` writes the schematic (real library
+  symbols embedded, derived symbols flattened, one global label per pin) and
+  `gen_pcb.py` the board (footprints placed by courtyard centre, every pad netted,
+  100 × 80 mm outline, sled + base-cover hole patterns, back-side GND pour).
+- **Design decision:** until probing fixes the keyboard matrix (#28) and the ClickPad pin
+  count (#29), Rev B brings all 40 FPC lines to `J_KB` and the drive/sense/aux lines to
+  `J_MAT` beside it (same for the ClickPad: `J_TP`/`J_PS2`); the assignment is jumpered.
+  A later revision hard-routes the measured map.
+- `route_pcb.py` + freerouting autoroute via Specctra DSN/SES; `./dev build pcb` chains
+  generate → ERC → place → DRC → route → DRC → gerbers/drill/pos/BOM/PDF.
+- `scripts/toolchain.env` gains `kicad/kicad` 9.0 and `freerouting` 2.3.0 by digest.
+- Result: ERC 0 errors, and no DRC errors on the routed board. Freerouting abandons a
+  few of the `J_KB`↔`J_MAT` connections while reporting success, so the build stops
+  before the fab outputs; `out/pcb/` holds schematic.pdf and the BOM meanwhile. See #62.
+  Base-cover hole positions are placeholders (#44).
+
 ### Hand-made enclosure (milestone M6, issues #46 #47 #48)
 
 - `cad/export_plates.scad` projects the printed case's solids into the laser-cut bottom

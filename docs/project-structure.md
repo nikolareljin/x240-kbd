@@ -30,9 +30,9 @@ build = `qmk compile` in the `qmkfm/qmk_cli` container against a `qmk_firmware` 
 `scripts/script-helpers/` is the submodule (branch `production`). Shims: `./build`,
 `./test`, `./flash`, `./probe`, `./site`. Output: `out/` (ignored).
 
-**Toolchain pinning:** `scripts/toolchain.env` holds the three Docker images by digest
-(`qmkfm/qmk_cli`, `jekyll/jekyll`, `openscad/openscad`) and the exact `qmk_firmware`
-commit; `scripts/pull_toolchain.sh` pulls them (`--save`/`--load` for offline tarballs,
+**Toolchain pinning:** `scripts/toolchain.env` holds the five Docker images by digest
+(`qmkfm/qmk_cli`, `jekyll/jekyll`, `openscad/openscad`, `kicad/kicad`,
+`freerouting/freerouting`) and the exact `qmk_firmware` commit; `scripts/pull_toolchain.sh` pulls them (`--save`/`--load` for offline tarballs,
 `--refresh` to re-resolve, `--verify` to print versions). `./dev install` and `./dev
 update` go through it, so a build is repeatable later.
 
@@ -54,7 +54,11 @@ default, Bootmagic key, layout metadata — QMK generates `LAYOUT` from it), `co
 
 - `pinout/` — probing procedure and the measured pinout tables. **Hardware source of truth.**
 - `wiring/wiring_diagram.md` — **the single authoritative GPIO table** plus schematics.
-- `pcb/` — Rev B KiCad project (milestone M7).
+- `pcb/` — Rev B KiCad project, **generated**: `netlist_model.py` (parts, library names,
+  nets) → `gen_schematic.py` (`.kicad_sch`, ERC) and `gen_pcb.py` (`.kicad_pcb`, placement,
+  DRC); `route_pcb.py` round-trips a Specctra DSN/SES through freerouting. `./dev build pcb`
+  runs the lot and exports PDF, gerbers, drill, position and BOM to `out/pcb/`. Edit the
+  model, never the KiCad files by hand — they are overwritten.
 
 ## `tools/`
 
