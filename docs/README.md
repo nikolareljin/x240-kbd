@@ -1,28 +1,54 @@
-# x240-kbd Documentation
+---
+title: Documentation index
+nav_order: 2
+---
 
-This directory contains the durable project guidance for the ThinkPad X240 USB
-keyboard and pointing-device conversion.
+# x240-kbd documentation
 
-## Documents
+Builder-facing pages are grouped by subject; maintainer rules are at the bottom. The same
+files are served as the GitHub Pages site (milestone M1).
 
-- [`project-structure.md`](project-structure.md) - repository layout, file
-  ownership, and where new work belongs.
-- [`design-instructions.md`](design-instructions.md) - electrical, mechanical,
-  firmware, and documentation design constraints.
-- [`code-instructions.md`](code-instructions.md) - coding standards for QMK C,
-  CircuitPython tools, OpenSCAD CAD, and Markdown docs.
-- [`build-and-test.md`](build-and-test.md) - pinout probing, firmware build,
-  flashing, CAD export, and validation workflow.
+## Hardware
 
-## Source Of Truth
+- [`hardware/components.md`](hardware/components.md) — every part with datasheet and product links
+- [`hardware/bom-and-cost.md`](hardware/bom-and-cost.md) — tiered BOM and all-in cost
+- [`hardware/gpio-budget.md`](hardware/gpio-budget.md) — why a Pico needs a shift register here
+- [`hardware/shift-register-matrix.md`](hardware/shift-register-matrix.md) — the 74HC165 sense chain
+- [`hardware/trackpoint.md`](hardware/trackpoint.md) — TrackPoint via Synaptics pass-through
+- [`hardware/backlight.md`](hardware/backlight.md) — MOSFET circuit and the RP2040 driver choice
+- [`hardware/pcb.md`](hardware/pcb.md) — Rev A perfboard vs Rev B PCB
 
-- `README.md` is the entry point for builders.
-- `PLAN.md` captures the project plan and phase sequence.
-- `ASSEMBLY.md` is the step-by-step build guide.
-- `hardware/pinout/*.md` stores measured FPC pinout data.
-- `hardware/wiring/wiring_diagram.md` stores the active GPIO and wiring plan.
-- `firmware/qmk/keyboards/x240_pico/` stores the QMK keyboard implementation.
-- `cad/*.scad` stores parametric mechanical source files.
+## Firmware
 
-If documents disagree, prefer measured hardware data first, then the QMK source,
-then the assembly guide, then planning notes.
+- [`firmware/architecture.md`](firmware/architecture.md) — file map and data paths
+- [`firmware/qmk-configuration.md`](firmware/qmk-configuration.md) — every flag, with corrections
+- [`firmware/pointing-stack.md`](firmware/pointing-stack.md) — ClickPad + TrackPoint decoding
+
+## Enclosure
+
+- [`enclosure/printed.md`](enclosure/printed.md) — split case and the small printed parts
+- [`enclosure/handmade.md`](enclosure/handmade.md) — no printer: base cover, laser-cut, console, wood
+- [`enclosure/integration.md`](enclosure/integration.md) — stack heights, routing, screws
+- [`enclosure/durability.md`](enclosure/durability.md) — heat, EMI, FPC fatigue, stiffness
+- [`enclosure/presentation.md`](enclosure/presentation.md) — assembly order, box, label, card
+
+## Reference
+
+- [`references.md`](references.md) — annotated sources
+- [`glossary.md`](glossary.md)
+
+## Maintainer rules (not published on the site)
+
+- [`project-structure.md`](project-structure.md) — where things live
+- [`design-instructions.md`](design-instructions.md) — design contract
+- [`code-instructions.md`](code-instructions.md) — coding standards
+- [`build-and-test.md`](build-and-test.md) — workflow from raw hardware to verified device
+
+## Source of truth
+
+1. Measured data in `hardware/pinout/*.md`
+2. The GPIO table in `hardware/wiring/wiring_diagram.md`
+3. QMK source under `firmware/`
+4. `ASSEMBLY.md`, then `PLAN.md`
+
+If documents disagree, the earlier item wins and the later one has a bug.
