@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 330" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">
+  <title>FPC cable orientation into a bottom-contact ZIF connector, with pin 1 reference</title>
+  <rect width="760" height="330" fill="#ffffff"/>
+  <text x="20" y="28" font-size="16" font-weight="bold" fill="#111">FPC into a ZIF connector — orientation and pin 1</text>
+  <rect x="40" y="120" width="300" height="60" fill="#c8a165" stroke="#8d6e3e"/>
+  <g stroke="#b8860b" stroke-width="1"><path d="M60 120 V180 M75 120 V180 M90 120 V180 M105 120 V180 M120 120 V180 M135 120 V180 M150 120 V180 M165 120 V180 M180 120 V180 M195 120 V180 M210 120 V180 M225 120 V180 M240 120 V180 M255 120 V180 M270 120 V180 M285 120 V180 M300 120 V180 M315 120 V180 M330 120 V180"/></g>
+  <rect x="300" y="110" width="40" height="80" fill="#1e88e5" opacity="0.35"/>
+  <text x="40" y="100" fill="#111">contacts face DOWN (bottom-contact socket)</text>
+  <text x="40" y="82" fill="#555" font-size="12">FPC / FFC, 40 × 0.5 mm</text>
+  <circle cx="60" cy="205" r="6" fill="#c62828"/><text x="72" y="210" fill="#c62828">pin 1 — chamfer or dot; matches the socket's "1"</text>
+  <text x="250" y="232" fill="#1565c0">↑ blue stiffener</text>
+  <rect x="400" y="100" width="300" height="100" rx="4" fill="#37474f"/>
+  <rect x="400" y="115" width="300" height="50" fill="#263238"/>
+  <rect x="400" y="75" width="300" height="25" rx="4" fill="#546e7a"/>
+  <text x="550" y="92" text-anchor="middle" fill="#fff" font-size="12">actuator — lift FULLY before inserting</text>
+  <text x="550" y="145" text-anchor="middle" fill="#cfd8dc" font-size="12">contacts on the floor of the slot</text>
+  <text x="405" y="220" fill="#111">1</text><text x="680" y="220" fill="#111">40</text>
+  <g fill="none" stroke="#111" stroke-width="2"><path d="M345 150 H395"/><path d="M385 143 L395 150 L385 157"/></g>
+  <g fill="#555" font-size="12">
+    <text x="20" y="258">Top-contact sockets exist too — check the breakout's marking.</text>
+    <text x="20" y="276">An "opposite-side" FFC extension flips the contact side AND reverses pin order (1 ↔ 40).</text>
+    <text x="20" y="294">Record which one you used. Insert square, to the stop, then close the actuator.</text>
+    <text x="20" y="312">Budget ~20 insertion cycles per connector — hence the ZIF support block.</text>
+  </g>
+</svg>

@@ -24,6 +24,8 @@ So one read is: pulse `PL` low, then clock 8 × *n* bits out while reading `Q7`.
 
 ## Chain schematic
 
+![74HC165 sense chain](../images/sense_chain.svg)
+
 ```
                  Pico
    GP17 (PL)  ───┬─────────────────┬─────────────────┐

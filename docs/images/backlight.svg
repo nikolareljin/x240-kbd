@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 350" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">
+  <title>Backlight low-side MOSFET switch driven from GP26</title>
+  <rect width="620" height="350" fill="#ffffff"/>
+  <text x="20" y="28" font-size="16" font-weight="bold" fill="#111">Backlight — low-side MOSFET switch</text>
+  <g fill="none" stroke="#111" stroke-width="2">
+    <path d="M110 70 H200"/><rect x="200" y="60" width="70" height="20" fill="#fff"/><path d="M270 70 H340 V110"/>
+    <path d="M325 110 H355 L340 135 Z" fill="#fff176"/><path d="M325 135 H355"/><path d="M340 135 V175"/>
+    <path d="M340 175 V195 M330 185 V225 M322 185 V225 M340 225 V260 M330 195 H340 M330 205 H340 M330 215 H340"/>
+    <path d="M322 205 H250"/>
+    <path d="M340 260 H400 M390 268 H410 M395 276 H405"/>
+    <rect x="180" y="195" width="70" height="20" fill="#fff"/><path d="M180 205 H100"/>
+    <path d="M215 215 V240"/><rect x="205" y="240" width="20" height="40" fill="#fff"/><path d="M215 280 V292 M205 292 H225 M209 299 H221"/>
+  </g>
+  <g fill="#111">
+    <text x="20" y="62">3V3 / VBUS</text><text x="205" y="50">R_series (measure)</text>
+    <text x="365" y="125">LED strip (+)</text><text x="365" y="165">LED strip (−)</text>
+    <text x="350" y="190">D</text><text x="350" y="248">S</text><text x="300" y="200">G</text><text x="360" y="215">Q1 2N7002 / BS170</text>
+    <text x="40" y="200">GP26</text><text x="180" y="190">10 kΩ</text>
+    <text x="232" y="258">100 kΩ</text><text x="232" y="274" fill="#555" font-size="11">gate pull-down:</text><text x="232" y="288" fill="#555" font-size="11">off at boot</text>
+  </g>
+  <text x="20" y="326" fill="#555" font-size="12">BACKLIGHT_DRIVER = software on RP2040 (QMK #24470).</text>
+  <text x="20" y="342" fill="#555" font-size="12">Measure strip current before choosing R_series; keep under ~150 mA.</text>
+</svg>

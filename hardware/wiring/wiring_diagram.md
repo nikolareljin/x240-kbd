@@ -52,6 +52,8 @@ Pico underside test pads — used only by the USB-C upgrade:
 
 ### Matrix and 74HC165 sense chain
 
+![74HC165 sense chain](../../docs/images/sense_chain.svg)
+
 ```
  Keyboard FPC (40-pin, via ZIF breakout) — pin numbers filled after probing
  ┌──────────────────────────────────────────────────────────────────────────┐
@@ -78,6 +80,8 @@ Read sequence, bit order and failure modes:
 
 ### PS/2 — ClickPad (carries the TrackPoint)
 
+![PS/2 bus with pull-ups](../../docs/images/ps2_bus.svg)
+
 ```
  3V3 ─────────────── ClickPad VCC
  GND ─────────────── ClickPad GND
@@ -94,6 +98,8 @@ GP20/GP19 with the same pull-ups — see
 [`docs/hardware/trackpoint.md`](../../docs/hardware/trackpoint.md).
 
 ### Backlight (backlit keyboard variants only)
+
+![Backlight MOSFET switch](../../docs/images/backlight.svg)
 
 ```
  3V3 (or VBUS) ── R_series ── LED strip (+)
@@ -127,16 +133,15 @@ R_series is set by measurement: [`docs/hardware/backlight.md`](../../docs/hardwa
  Pico VBUS      ──── breakout VBUS       breakout must have 5.1 kΩ on CC1 and CC2
 ```
 
-![USB-C breakout illustration](../../docs/images/usb_c_wiring.png)
-
-*Decorative. The labels in the image predate the TP1/TP2/TP3 correction; the text above is
-the reference.*
+![USB-C breakout to Pico test pads](../../docs/images/usb_c_wiring.svg)
 
 ### FPC to ZIF breakout
 
+![FPC orientation and pin 1](../../docs/images/fpc_orientation.svg)
+
 ![FPC ribbon cable and ZIF breakout](../../docs/images/fpc_zif_wiring.png)
 
-*Illustrative. Check your breakout's contact side (top vs bottom) against the cable.*
+*Photo-style illustration only; the drawing above is the reference.*
 
 ---
 

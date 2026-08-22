@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 360" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">
+  <title>USB-C breakout wired to the Raspberry Pi Pico underside test pads</title>
+  <rect width="760" height="360" fill="#ffffff"/>
+  <text x="20" y="28" font-size="16" font-weight="bold" fill="#111">USB-C breakout → Pico test pads (underside)</text>
+  <text x="20" y="48" fill="#555">Source: Pico datasheet, "Test points". Breakout must have 5.1 kΩ on CC1 and CC2.</text>
+  <rect x="60" y="80" width="220" height="230" rx="8" fill="#1b5e20" stroke="#0b3d12" stroke-width="2"/>
+  <text x="170" y="104" text-anchor="middle" fill="#fff" font-weight="bold">Raspberry Pi Pico</text>
+  <text x="170" y="122" text-anchor="middle" fill="#cfe8d0">underside · USB at top</text>
+  <rect x="256" y="132" width="12" height="12" fill="#d4af37" stroke="#000" stroke-width="0.5"/>
+  <text x="248" y="143" text-anchor="end" fill="#fff">pin 40 VBUS</text>
+  <g fill="#d4af37" stroke="#000" stroke-width="0.5">
+    <circle cx="262" cy="160" r="7"/><circle cx="262" cy="195" r="7"/><circle cx="262" cy="230" r="7"/>
+  </g>
+  <g fill="#fff" text-anchor="end">
+    <text x="248" y="164">TP1  GND</text><text x="248" y="199">TP2  USB D−</text><text x="248" y="234">TP3  USB D+</text>
+  </g>
+  <text x="70" y="292" fill="#cfe8d0" font-size="12">TP4/5 unused · TP6 = BOOTSEL</text>
+  <rect x="520" y="110" width="180" height="170" rx="8" fill="#2c3e50" stroke="#1a2530" stroke-width="2"/>
+  <text x="610" y="134" text-anchor="middle" fill="#fff" font-weight="bold">USB-C breakout</text>
+  <rect x="690" y="170" width="16" height="40" rx="4" fill="#bbb"/>
+  <g fill="#d4af37" stroke="#000" stroke-width="0.5">
+    <circle cx="540" cy="160" r="6"/><circle cx="540" cy="185" r="6"/><circle cx="540" cy="210" r="6"/><circle cx="540" cy="235" r="6"/>
+  </g>
+  <g fill="#fff"><text x="555" y="164">VBUS</text><text x="555" y="189">GND</text><text x="555" y="214">D−</text><text x="555" y="239">D+</text></g>
+  <text x="530" y="264" fill="#cfd8dc" font-size="11">CC1, CC2 → 5.1 kΩ → GND</text>
+  <g fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M270 138 H400 V160 H534" stroke="#c62828"/>
+    <path d="M270 160 H380 V185 H534" stroke="#111"/>
+    <path d="M270 195 H420 V210 H534" stroke="#2e7d32"/>
+    <path d="M270 230 H460 V235 H534" stroke="#1565c0"/>
+  </g>
+  <g font-size="12"><text x="300" y="132" fill="#c62828">VBUS 5 V</text><text x="300" y="154" fill="#111">GND</text><text x="300" y="189" fill="#2e7d32">D−</text><text x="300" y="224" fill="#1565c0">D+</text></g>
+  <text x="20" y="340" fill="#555" font-size="12">Keep D− and D+ equal length, adjacent or twisted; total run ≤ 60 mm.</text>
+</svg>

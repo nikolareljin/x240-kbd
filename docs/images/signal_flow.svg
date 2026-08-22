@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 260" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13">
+  <title>Signal flow from the X240 keyboard and ClickPad to USB HID reports</title>
+  <rect width="900" height="260" fill="#ffffff"/>
+  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#455a64"/></marker></defs>
+  <g stroke="#455a64" stroke-width="1.5" fill="#eceff1">
+    <rect x="20" y="40" width="150" height="70" rx="8"/>
+    <rect x="20" y="150" width="150" height="70" rx="8"/>
+    <rect x="230" y="40" width="150" height="70" rx="8"/>
+    <rect x="230" y="150" width="150" height="70" rx="8"/>
+    <rect x="440" y="40" width="170" height="70" rx="8"/>
+    <rect x="440" y="150" width="170" height="70" rx="8"/>
+    <rect x="680" y="95" width="200" height="70" rx="8" fill="#1b5e20" stroke="#0b3d12"/>
+  </g>
+  <g fill="#111" text-anchor="middle">
+    <text x="95" y="68" font-weight="bold">X240 keyboard</text><text x="95" y="88">40-pin FPC, matrix</text>
+    <text x="95" y="178" font-weight="bold">ClickPad + TrackPoint</text><text x="95" y="198">one PS/2 bus</text>
+    <text x="305" y="68" font-weight="bold">3 × 74HC165</text><text x="305" y="88">24 sense lines → SPI</text>
+    <text x="305" y="178" font-weight="bold">PIO PS/2 host</text><text x="305" y="198">DATA GP21 / CLK GP22</text>
+    <text x="525" y="68" font-weight="bold">matrix.c</text><text x="525" y="88">debounce → keymap</text>
+    <text x="525" y="178" font-weight="bold">synaptics.c / trackpoint.c</text><text x="525" y="198">W==3 → guest frame</text>
+  </g>
+  <g fill="#fff" text-anchor="middle"><text x="780" y="123" font-weight="bold">USB HID composite</text><text x="780" y="143">keyboard · mouse · consumer</text></g>
+  <g fill="none" stroke="#455a64" stroke-width="2" marker-end="url(#a)">
+    <path d="M170 75 H230"/><path d="M170 185 H230"/><path d="M380 75 H440"/><path d="M380 185 H440"/>
+    <path d="M610 75 H650 V120 H680"/><path d="M610 185 H650 V140 H680"/>
+  </g>
+  <text x="20" y="245" fill="#555" font-size="12">Drive lines GP0–GP9 · backlight GP26 · power button GP27 · LED GP28 · 8 GPIO spare.</text>
+</svg>

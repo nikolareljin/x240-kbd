@@ -28,6 +28,8 @@ Prices are in [`bom-and-cost.md`](bom-and-cost.md). Wiring is in
 | Buy | [raspberrypi.com](https://www.raspberrypi.com/products/raspberry-pi-pico/) · Adafruit · Pimoroni · DigiKey |
 | Why | Cheapest board with a PIO block, which is what makes a hardware PS/2 host possible in QMK on this family; QMK's RP2040 platform support is mature. |
 
+![USB-C breakout to Pico test pads](../images/usb_c_wiring.svg)
+
 **USB test pads on the underside** — used by the optional USB-C upgrade:
 
 | Pad | Signal |

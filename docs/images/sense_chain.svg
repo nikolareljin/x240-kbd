@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 450" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12">
+  <title>Three cascaded 74HC165 shift registers reading 24 matrix sense lines</title>
+  <rect width="920" height="450" fill="#ffffff"/>
+  <text x="20" y="28" font-size="16" font-weight="bold" fill="#111">74HC165 sense chain — 24 sense lines on 3 GPIO</text>
+  <rect x="20" y="150" width="120" height="120" rx="6" fill="#1b5e20"/>
+  <text x="80" y="172" text-anchor="middle" fill="#fff" font-weight="bold">Pico</text>
+  <g fill="#fff"><text x="30" y="195">GP16 RX ◄</text><text x="30" y="229">GP17 PL ►</text><text x="30" y="254">GP18 SCK ►</text></g>
+  <g font-weight="bold" fill="#111" text-anchor="middle">
+    <g stroke="#455a64" stroke-width="1.5" fill="#eceff1"><rect x="200" y="110" width="200" height="150" rx="4"/><rect x="440" y="110" width="200" height="150" rx="4"/><rect x="680" y="110" width="200" height="150" rx="4"/></g>
+    <text x="300" y="130">U1 74HC165</text><text x="540" y="130">U2 74HC165</text><text x="780" y="130">U3 74HC165</text>
+  </g>
+  <g fill="#111">
+    <text x="208" y="154">DS ◄</text><text x="360" y="154">Q7 ►</text><text x="208" y="184">PL</text><text x="208" y="209">CP</text><text x="208" y="234">CE = GND</text><text x="300" y="252" text-anchor="middle">D0…D7 ◄ S0…S7</text>
+    <text x="448" y="154">DS ◄</text><text x="600" y="154">Q7 ►</text><text x="448" y="184">PL</text><text x="448" y="209">CP</text><text x="448" y="234">CE = GND</text><text x="540" y="252" text-anchor="middle">D0…D7 ◄ S8…S15</text>
+    <text x="688" y="154">DS = GND</text><text x="840" y="154">Q7 ►</text><text x="688" y="184">PL</text><text x="688" y="209">CP</text><text x="688" y="234">CE = GND</text><text x="780" y="252" text-anchor="middle">D0…D7 ◄ S16…S23</text>
+  </g>
+  <g fill="none" stroke="#1565c0" stroke-width="2.5" stroke-linejoin="round">
+    <path d="M880 150 V80 H450 V150"/>
+    <path d="M640 150 V92 H210 V150"/>
+    <path d="M400 150 V104 H160 V190 H140"/>
+  </g>
+  <text x="470" y="72" fill="#1565c0">serial: U3.Q7 → U2.DS,  U2.Q7 → U1.DS,  U1.Q7 → GP16</text>
+  <g fill="none" stroke="#c62828" stroke-width="2" stroke-linejoin="round">
+    <path d="M140 225 H170 V310 H668 V180 H680"/><path d="M188 310 V180 H200"/><path d="M428 310 V180 H440"/>
+  </g>
+  <g fill="none" stroke="#2e7d32" stroke-width="2" stroke-linejoin="round">
+    <path d="M140 250 H160 V290 H658 V205 H680"/><path d="M178 290 V205 H200"/><path d="M418 290 V205 H440"/>
+  </g>
+  <text x="690" y="296" fill="#2e7d32">CP bus — GP18 (SPI0 SCK)</text>
+  <text x="690" y="316" fill="#c62828">PL bus — GP17</text>
+  <g fill="#fff3e0" stroke="#ef6c00" stroke-width="1.5"><rect x="230" y="340" width="140" height="22" rx="3"/><rect x="470" y="340" width="140" height="22" rx="3"/><rect x="710" y="340" width="140" height="22" rx="3"/></g>
+  <g fill="#e65100" font-size="11" text-anchor="middle"><text x="300" y="355">RN1 10 kΩ ×8 → 3V3</text><text x="540" y="355">RN2 10 kΩ ×8 → 3V3</text><text x="780" y="355">RN3 10 kΩ ×8 → 3V3</text></g>
+  <text x="300" y="378" text-anchor="middle" fill="#555" font-size="11">pull-ups on S0…S7</text><text x="540" y="378" text-anchor="middle" fill="#555" font-size="11">pull-ups on S8…S15</text><text x="780" y="378" text-anchor="middle" fill="#555" font-size="11">pull-ups on S16…S23</text>
+  <text x="20" y="412" fill="#555">Every D input needs a pull-up (HC logic has none). 100 nF at each VCC.</text>
+  <text x="20" y="432" fill="#555">Read: pulse PL low, then clock 24 bits on CP while sampling Q7; first bit out is U1.D7 (S7).</text>
+</svg>

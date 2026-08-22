@@ -22,6 +22,8 @@ keyboard and touchpad FPC cables before wiring them to the Pico.
 
 ### A1. Insert FPC cable
 
+![FPC orientation and pin 1](../../docs/images/fpc_orientation.svg)
+
 1. Lift the ZIF locking lever on the breakout board.
 2. Slide the keyboard FPC ribbon into the connector.
    - Most FPC breakouts require the contact pads (shiny metal) to face down.

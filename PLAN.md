@@ -188,10 +188,7 @@ Default is the Pico's Micro-USB. Optional: solder a USB-C breakout (with 5.1 kΩ
 pull-downs) to the Pico's underside pads **TP1 = GND, TP2 = D−, TP3 = D+** plus VBUS; set
 `usb_c = true` in `cad/bottom_case.scad`. No firmware change. Or use a Pimoroni Pico LiPo.
 
-![USB-C breakout illustration](docs/images/usb_c_wiring.png)
-
-*Illustration only — its pad labels predate the correction above. The table is the wiring
-reference.*
+![USB-C breakout to Pico test pads](docs/images/usb_c_wiring.svg)
 
 ---
 

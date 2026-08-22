@@ -45,6 +45,8 @@ Works on **any OS without drivers** — it enumerates as a standard USB HID comp
 | USB | Micro-USB; USB-C via the Pico's TP1/TP2/TP3 pads |
 | Enclosure | Printed split case, or the original X240 base cover, laser-cut plates, a Hammond console or wood |
 
+![Signal flow](docs/images/signal_flow.svg)
+
 Why a shift register: the closest documented ThinkPad keyboard of this era needs 26 matrix
 lines — every GPIO the Pico has. [`docs/hardware/gpio-budget.md`](docs/hardware/gpio-budget.md).
 
@@ -140,6 +142,8 @@ underside:
 | VBUS (pin 40) | 5 V | VBUS |
 
 Set `usb_c = true` in `cad/bottom_case.scad` for the USB-C cutout. No firmware change.
+
+![USB-C breakout to Pico test pads](docs/images/usb_c_wiring.svg)
 
 > The illustration [`docs/images/usb_c_wiring.png`](docs/images/usb_c_wiring.png) is
 > decorative; its pad labels predate this table and are **not** the wiring reference.

@@ -12,6 +12,8 @@ unpopulated and `BACKLIGHT_ENABLE = no`.
 
 ## Circuit
 
+![Backlight MOSFET switch](../images/backlight.svg)
+
 A low-side N-MOSFET switch on GP26. The Pico cannot source the strip's current directly
 (GPIO limit ~12 mA; the strip is ~100 mA on comparable ThinkPad arrays).
 
