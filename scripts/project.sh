@@ -211,8 +211,11 @@ x240_build_cad() {
 # Generate, route, check and export the Rev B board. Every KiCad step runs in the kicad
 # image; routing runs in the freerouting image. Outputs land in out/pcb; the generated
 # .kicad_sch/.kicad_pcb are written back into hardware/pcb (they are committed).
+# Runs as the invoking user: the image's own uid (1000) only matches by luck, and in CI the
+# checkout belongs to uid 1001, so the generated files could not be written there.
 x240_kicad() {
-  docker run --rm "$(x240_docker_tty)" -v "$X240_PCB_DIR":/pcb -v "$X240_OUT/pcb":/out -w /pcb "$X240_KICAD_IMAGE" sh -c "$*"
+  docker run --rm "$(x240_docker_tty)" --user "$(id -u):$(id -g)" -e HOME=/tmp -e XDG_CONFIG_HOME=/tmp/.config \
+    -v "$X240_PCB_DIR":/pcb -v "$X240_OUT/pcb":/out -w /pcb "$X240_KICAD_IMAGE" sh -c "$*"
 }
 
 x240_build_pcb() {
