@@ -24,6 +24,8 @@ QMK C, CircuitPython tools, OpenSCAD and Markdown. Keep each hardware-verifiable
 ## CircuitPython tools
 
 - Standalone, built-in modules only; run as `code.py` at 115200 baud.
+- Hardware imports are guarded (`ON_DEVICE`); protocol/formatting logic stays in pure
+  functions above them and is covered by `tools/tests/` on the host.
 - Every physical pin assumption is a top-level constant.
 - Output is a Markdown table that pastes into the pinout files unchanged.
 - Deinitialise GPIO between passes; never drive an identified power or ground pin.

@@ -40,14 +40,17 @@ keyboard and touchpad FPC cables before wiring them to the Pico.
 
 The 40-pad breakout has more pads than the Pico has GPIO (26). The script runs in
 **two passes**: wire pads 1–26 for pass A, then pads 15–40 for pass B (the overlap ties the
-two maps together). Record which pad is on which GPIO for each pass at the top of the script.
+two maps together). Set `PASS = "A"` or `"B"` at the top of the script; `GPIO_ORDER` lists
+the 26 GPIO in the order they are wired to the pads. As soon as a pad is known to be VCC,
+GND or backlight, add it to `NEVER_DRIVE_PADS` so it is never pulled LOW.
 
 The script will:
 - Iterate through the wired pads
 - Drive each pin LOW while configuring all other pins as inputs with pull-ups
 - Display: `Press a key... ` and wait
-- When you press a key, it prints the two pin numbers that went LOW together
-- Record each (pin_A, pin_B) pair against the key name
+- When you press a key, it prints the drive pad and the sense pad that closed together
+- At the end it prints a Markdown table (key, drive pad, sense pad, pass) — paste it into
+  `x240_keyboard_fpc_pinout.md` — and a drive/sense summary
 
 Work through every key on the keyboard. Keys that share a row will produce the same
 first pin number; keys in the same column share the second pin number.
@@ -113,8 +116,8 @@ Insert the touchpad's FPC cable into the small breakout board the same way as ab
 
 ### B3. Identify PS/2 CLK and DATA
 
-1. Flash Pico with `tools/ps2_sniffer/ps2_sniffer.py` (as `code.py`).
-2. Edit the script to set the two candidate pin numbers to monitor.
+1. Flash Pico with `tools/ps2_sniffer/ps2_sniffer.py` (as `code.py`), `MODE = "find"`.
+2. Edit `CANDIDATE_PAIRS` — the `(clk, data)` GPIO pairs to try.
 3. Power the touchpad (VCC + GND from Pico).
 4. Move your finger on the touchpad surface.
 5. The serial console should show decoded PS/2 movement packets when CLK/DATA are
@@ -126,8 +129,10 @@ Insert the touchpad's FPC cable into the small breakout board the same way as ab
 
 ### B3b. Confirm the TrackPoint route
 
-Switch the sniffer to Synaptics mode (it sends the identify sequence and enables absolute
-mode with pass-through). Push the stick with no finger on the pad:
+Set `MODE = "synaptics"` and `CLK_PIN`/`DATA_PIN` to the pair just found. The script
+resets the ClickPad, runs the Synaptics identify sequence, prints the capability bits,
+enables absolute + W mode, enables the guest, and streams for `VERDICT_SECONDS`. Push the
+stick with no finger on the pad. It ends with a `VERDICT:` line:
 
 - Packets with `W == 3` ⇒ the TrackPoint rides this bus. **Done — no extra wiring.**
 - No such packets ⇒ go to A5 and wire the TrackPoint's own line to GP20/GP19.

@@ -10,20 +10,23 @@ From raw hardware to a verified device. Each step maps to a milestone.
 ## 1. Probe the keyboard FPC (M2)
 
 CircuitPython on the Pico; `tools/matrix_probe/matrix_probe.py` as `code.py`; two passes
-over the 40 pads; 115200 baud. Record drive/sense pairs per key, matrix size, GND/VCC,
+over the 40 pads (`PASS = "A"` then `"B"`); 115200 baud. Output is a Markdown table. Record drive/sense pairs per key, matrix size, GND/VCC,
 backlight, power button, and the three-key ghost result in
 `hardware/pinout/x240_keyboard_fpc_pinout.md`.
 
 ## 2. Probe the ClickPad and decide the TrackPoint route (M2)
 
 VCC/GND first; 4.7 kΩ pull-ups on candidate CLK/DATA; `tools/ps2_sniffer/ps2_sniffer.py`
-finds the pair, then in Synaptics mode reports whether `W == 3` pass-through frames appear
-when the stick is pushed. Record in `hardware/pinout/x240_clickpad_fpc_pinout.md`.
+in `MODE = "find"` finds the pair, then in `MODE = "synaptics"` prints a `VERDICT:` line
+stating whether `W == 3` pass-through frames appeared when the stick was pushed. Record in `hardware/pinout/x240_clickpad_fpc_pinout.md`.
 
 ## 3. Verify the sense chain alone (M3)
 
-Build the 74HC165 chain; run `tools/shift_register_test/`; ground each input and watch its
-bit. Only then connect the keyboard FPC.
+Build the 74HC165 chain; run `tools/shift_register_test/shift_register_test.py` in
+`MODE = "walk"` — it prompts S0…S23 in order and names the wiring fault on any mismatch.
+Only then connect the keyboard FPC.
+
+Host-side unit tests for the tools' protocol logic: `cd tools/tests && python3 -m pytest -q`.
 
 ## 4. Wire the rest (M3)
 

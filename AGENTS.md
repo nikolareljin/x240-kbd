@@ -32,7 +32,8 @@ standalone USB HID keyboard and pointing device using a Raspberry Pi Pico
 - Flash with `qmk flash -kb x240_pico -km default` or copy the generated UF2 to
   the Pico bootloader drive.
 - For CircuitPython probe tools, copy the selected script to the Pico as
-  `code.py` and use a 115200 baud serial terminal.
+  `code.py` and use a 115200 baud serial terminal. Their pure logic is tested on the
+  host with `cd tools/tests && python3 -m pytest -q`; keep hardware imports guarded.
 - Validate every key, NKRO, FN layer behavior, ClickPad movement/clicks,
   backlight control, power-button long-press behavior, and driverless USB HID
   enumeration before final assembly.
