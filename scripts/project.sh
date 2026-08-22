@@ -227,7 +227,18 @@ x240_build_pcb() {
     || { log_error "build: pcb ERC has errors (out/pcb/erc.rpt)"; return 1; }
   x240_kicad "kicad-cli sch export pdf -o /out/schematic.pdf $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export netlist -o /out/$X240_PCB.net $X240_PCB.kicad_sch >/dev/null && kicad-cli sch export bom -o /out/bom.csv --fields 'Reference,Value,Footprint,\${QUANTITY}' --group-by Value,Footprint $X240_PCB.kicad_sch >/dev/null"
   log_info "build: pcb — board from netlist_model.py, placement DRC"
-  x240_kicad "python3 gen_pcb.py /pcb 2>/dev/null && kicad-cli pcb drc --severity-error --exit-code-violations -o /out/drc-placement.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1 || { kicad-cli pcb drc --severity-error -o /out/drc-placement.rpt $X240_PCB.kicad_pcb >/dev/null 2>&1; grep -c '^\[' /out/drc-placement.rpt; }"
+  x240_kicad "python3 gen_pcb.py /pcb 2>/dev/null && kicad-cli pcb drc --severity-error --format json -o /out/drc-placement.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
+  # The board is unrouted here, so open connections are expected; any other error-severity
+  # violation (overlapping courtyards, shorts, keepouts) is a placement bug and stops the build.
+  if ! python3 - "$out/drc-placement.json" <<'PYEOF'
+import json, sys
+d = json.load(open(sys.argv[1]))
+bad = [v for v in d["violations"] if v["severity"] == "error"]
+for v in bad[:10]:
+    print("     ", v["type"], "|", v["description"][:70], "|", [i.get("description", "")[:36] for i in v["items"]])
+sys.exit(1 if bad else 0)
+PYEOF
+  then log_error "build: pcb — placement DRC has errors (out/pcb/drc-placement.json)"; return 1; fi
   if [[ "${X240_SKIP_ROUTE:-}" != "1" ]]; then
     # Freerouting is nondeterministic and the SES round-trip occasionally drops a
     # connection, so route -> import -> check, and re-route the remainder (existing
@@ -247,6 +258,10 @@ x240_build_pcb() {
       log_warn "build: pcb — $left connection(s) still open after round $round"
       python3 -c "import json;d=json.load(open('$out/drc.json'));[print('     ', ' <-> '.join(i.get('description','')[:40] for i in u['items'])) for u in d['unconnected_items'][:10]]"
     done
+    if [[ "$left" != "0" ]]; then
+      log_error "build: pcb — $left connection(s) still open after 3 routing rounds; no fab outputs"
+      return 1
+    fi
   fi
   log_info "build: pcb — fab outputs"
   x240_kicad "mkdir -p /out/gerbers && kicad-cli pcb export gerbers -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export drill -o /out/gerbers/ $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pos -o /out/$X240_PCB-pos.csv --format csv --units mm $X240_PCB.kicad_pcb >/dev/null && kicad-cli pcb export pdf -o /out/board.pdf --layers F.Cu,B.Cu,F.Silkscreen,Edge.Cuts $X240_PCB.kicad_pcb >/dev/null && cd /out/gerbers && zip -q -r ../gerbers.zip ."
