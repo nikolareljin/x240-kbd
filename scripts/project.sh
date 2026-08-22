@@ -174,6 +174,13 @@ x240_build_cad() {
     "fpc_cable_guide_keyboard:fpc_cable_guide.scad:cable=\"keyboard\""
     "fpc_cable_guide_clickpad:fpc_cable_guide.scad:cable=\"clickpad\""
   )
+  # 2D plates for the laser-cut route and the box insert, exported as DXF
+  local dxf_jobs=(
+    "plate_bottom:export_plates.scad:plate=\"bottom\""
+    "plate_spacer:export_plates.scad:plate=\"spacer\""
+    "box_insert:export_plates.scad:plate=\"insert\""
+    "plates_sheet:export_plates.scad:plate=\"sheet\""
+  )
   local job name src def
   for job in "${jobs[@]}"; do
     IFS=: read -r name src def <<<"$job"
@@ -186,7 +193,14 @@ x240_build_cad() {
     fi
     [[ -s "$out/$name.stl" ]] || { log_error "build: cad $name produced no STL"; rc=1; }
   done
-  if (( rc == 0 )); then print_success "build: $out ($(find "$out" -name "*.stl" | wc -l) STL files)"; fi
+  for job in "${dxf_jobs[@]}"; do
+    IFS=: read -r name src def <<<"$job"
+    log_info "build: cad $name (dxf)"
+    docker run --rm -v "$DEV_REPO_ROOT/cad":/cad:ro -v "$out":/out -w /cad "$X240_OPENSCAD_IMAGE" \
+        openscad -q -D "$def" -o "/out/$name.dxf" "$src" 2>&1 | grep -vE '^\s*$' | sed 's/^/   /' || true
+    [[ -s "$out/$name.dxf" ]] || { log_error "build: cad $name produced no DXF"; rc=1; }
+  done
+  if (( rc == 0 )); then print_success "build: $out ($(find "$out" -name "*.stl" | wc -l) STL, $(find "$out" -name "*.dxf" | wc -l) DXF)"; fi
   return $rc
 }
 
