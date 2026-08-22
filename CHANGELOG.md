@@ -18,9 +18,10 @@ All notable project changes should be recorded here.
 - `route_pcb.py` + freerouting autoroute via Specctra DSN/SES; `./dev build pcb` chains
   generate → ERC → place → DRC → route → DRC → gerbers/drill/pos/BOM/PDF.
 - `scripts/toolchain.env` gains `kicad/kicad` 9.0 and `freerouting` 2.3.0 by digest.
-- Result: ERC 0 errors; freerouting routes all 202 connections; DRC on the routed board
-  has no errors and no unconnected items; `out/pcb/` holds schematic.pdf, board.pdf,
-  gerbers.zip, drill, position and BOM. Base-cover hole positions are placeholders (#44).
+- Result: ERC 0 errors, and no DRC errors on the routed board. Freerouting abandons a
+  few of the `J_KB`↔`J_MAT` connections while reporting success, so the build stops
+  before the fab outputs; `out/pcb/` holds schematic.pdf and the BOM meanwhile. See #62.
+  Base-cover hole positions are placeholders (#44).
 
 ### Hand-made enclosure (milestone M6, issues #46 #47 #48)
 

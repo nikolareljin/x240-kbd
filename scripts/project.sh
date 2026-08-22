@@ -253,36 +253,40 @@ sys.exit(1 if bad else 0)
 PYEOF
   then log_error "build: pcb — placement DRC has errors (out/pcb/drc-placement.json)"; return 1; fi
   if [[ "${X240_SKIP_ROUTE:-}" != "1" ]]; then
-    # Freerouting is nondeterministic and the SES round-trip occasionally drops a
-    # connection, so route -> import -> check, and re-route the remainder (existing
-    # tracks are kept in the DSN) until DRC reports no unconnected items.
-    local round left
-    for round in 1 2 3; do
-      log_info "build: pcb — autoroute round $round (freerouting, $passes passes; X240_SKIP_ROUTE=1 to skip)"
-      x240_kicad_py "route_pcb.py export $X240_PCB.kicad_pcb /out/$X240_PCB.dsn" || { log_error "build: pcb — DSN export failed"; return 1; }
-      rm -f "$out/$X240_PCB.ses"
-      docker run --rm "$(x240_docker_tty)" -v "$out":/w --entrypoint java "$X240_FREEROUTING_IMAGE" \
-        -jar /app/freerouting-executable.jar -de "/w/$X240_PCB.dsn" -do "/w/$X240_PCB.ses" -mp "$passes" -oit 0.5 2>&1 | grep -E 'Auto-routing stage completed' | sed -E 's/.*completed in/   routed in/' || true
-      [[ -s "$out/$X240_PCB.ses" ]] || { log_error "build: pcb — freerouting produced no session file"; return 1; }
-      x240_kicad_py "route_pcb.py import $X240_PCB.kicad_pcb /out/$X240_PCB.ses" || { log_error "build: pcb — SES import failed"; return 1; }
-      x240_kicad "kicad-cli pcb drc --severity-error --format json -o /out/drc.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
-      # Shorts, clearance and keepout errors cannot be fixed by another routing round: stop now.
-      if ! python3 - "$out/drc.json" <<'PYEOF'
+    # One route, once.  -mt 1 pins the optimizer to a single thread: with the default pool
+    # (logical processors - 1) the same board routes differently on every machine, and CI
+    # stranded twice the connections a local run of the same commit did.  Single-threaded,
+    # two runs of the same DSN produce byte-identical sessions.
+    #
+    # There is deliberately no retry: re-routing exports the previous attempt's tracks as
+    # protected wiring freerouting will not rip up, so a half-finished net stays half
+    # finished and every extra round strands more of them (issue #62).
+    log_info "build: pcb — autoroute (freerouting, $passes passes, single-threaded; X240_SKIP_ROUTE=1 to skip)"
+    x240_kicad_py "route_pcb.py export $X240_PCB.kicad_pcb /out/$X240_PCB.dsn" || { log_error "build: pcb — DSN export failed"; return 1; }
+    rm -f "$out/$X240_PCB.ses"
+    docker run --rm "$(x240_docker_tty)" -v "$out":/w --entrypoint java "$X240_FREEROUTING_IMAGE" \
+      -jar /app/freerouting-executable.jar -de "/w/$X240_PCB.dsn" -do "/w/$X240_PCB.ses" -mp "$passes" -mt 1 -oit 0.5 2>&1 | grep -E 'Auto-routing stage completed' | sed -E 's/.*completed in/   routed in/' || true
+    # That line is freerouting's own account of its work, and it is not the gate: it has
+    # reported "0 unrouted" while emitting nothing at all for five connections (#62).
+    # Only KiCad's DRC below decides whether the board is routed.
+    [[ -s "$out/$X240_PCB.ses" ]] || { log_error "build: pcb — freerouting produced no session file"; return 1; }
+    x240_kicad_py "route_pcb.py import $X240_PCB.kicad_pcb /out/$X240_PCB.ses" || { log_error "build: pcb — SES import failed"; return 1; }
+    x240_kicad "kicad-cli pcb drc --severity-error --format json -o /out/drc.json $X240_PCB.kicad_pcb >/dev/null 2>&1"
+    # Shorts, clearance and keepout violations are rule or placement faults, not bad luck.
+    if ! python3 - "$out/drc.json" <<'PYSCRIPT'
 import json, sys
 d = json.load(open(sys.argv[1]))
 bad = [v for v in d["violations"] if v["severity"] == "error"]
 for v in bad[:10]:
     print("     ", v["type"], "|", v["description"][:70], "|", [i.get("description", "")[:36] for i in v["items"]])
 sys.exit(1 if bad else 0)
-PYEOF
-      then log_error "build: pcb — routed board has DRC errors (out/pcb/drc.json)"; return 1; fi
-      left="$(python3 -c "import json;d=json.load(open('$out/drc.json'));print(len(d['unconnected_items']))")"
-      if [[ "$left" == "0" ]]; then break; fi
-      log_warn "build: pcb — $left connection(s) still open after round $round"
-      python3 -c "import json;d=json.load(open('$out/drc.json'));[print('     ', ' <-> '.join(i.get('description','')[:40] for i in u['items'])) for u in d['unconnected_items'][:10]]"
-    done
+PYSCRIPT
+    then log_error "build: pcb — routed board has DRC errors (out/pcb/drc.json)"; return 1; fi
+    local left
+    left="$(python3 -c "import json;d=json.load(open('$out/drc.json'));print(len(d['unconnected_items']))")"
     if [[ "$left" != "0" ]]; then
-      log_error "build: pcb — $left connection(s) still open after 3 routing rounds; no fab outputs"
+      log_error "build: pcb — $left connection(s) left unrouted by freerouting; no fab outputs"
+      python3 -c "import json;d=json.load(open('$out/drc.json'));[print('     ', ' <-> '.join(i.get('description','')[:40] for i in u['items'])) for u in d['unconnected_items'][:10]]"
       return 1
     fi
   fi
