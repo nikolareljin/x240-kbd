@@ -1,6 +1,6 @@
 ---
 title: Documentation index
-nav_order: 2
+nav_exclude: true
 ---
 
 # x240-kbd documentation
