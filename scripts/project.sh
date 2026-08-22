@@ -60,7 +60,7 @@ x240_clone_qmk() {
   git -C "$X240_QMK_HOME" submodule update -q --init --recursive --depth 1 --jobs 8
 }
 
-# Run a shell command inside the QMK image with the checkout and this keyboard mounted.
+# Run ONE shell command string inside the QMK image with the checkout and this keyboard mounted.
 # The bind-mounted checkout is owned by the host user, so git inside the container needs
 # it marked safe; only the checkout and its lib/* submodules are whitelisted, not '*'.
 x240_qmk() {
@@ -70,17 +70,17 @@ x240_qmk() {
     -v "$X240_QMK_HOME":/qmk_firmware \
     -v "$X240_KB_DIR":/qmk_firmware/keyboards/$X240_KB \
     -w /qmk_firmware "$X240_QMK_IMAGE" sh -c \
-    "for d in /qmk_firmware /qmk_firmware/lib/*; do git config --global --add safe.directory \"\$d\" >/dev/null 2>&1; done; qmk config user.qmk_home=/qmk_firmware >/dev/null 2>&1; $*"
+    "for d in /qmk_firmware /qmk_firmware/lib/*; do git config --global --add safe.directory \"\$d\" >/dev/null 2>&1; done; qmk config user.qmk_home=/qmk_firmware >/dev/null 2>&1; $1"
 }
 
-# Run a shell command inside the Jekyll image with docs/ mounted; $1 is the output dir.
+# Run ONE shell command string inside the Jekyll image with docs/ mounted; $1 is the output dir, $2 the command.
 x240_jekyll() {
   x240_require_docker
   local out="$1"; shift
   mkdir -p "$out" "$X240_OUT/.bundle"
   docker run --rm "$(x240_docker_tty)" -e JEKYLL_ENV=production \
     -v "$DEV_REPO_ROOT/docs":/srv/jekyll -v "$out":/out -v "$X240_OUT/.bundle":/usr/local/bundle \
-    -w /srv/jekyll "$X240_JEKYLL_IMAGE" sh -c "$*"
+    -w /srv/jekyll "$X240_JEKYLL_IMAGE" sh -c "$1"
 }
 
 # Find a mounted drive by volume label (RPI-RP2, CIRCUITPY) on Linux or macOS.
@@ -216,14 +216,14 @@ x240_build_cad() {
 # filtered out of the log afterwards, so neither a pipeline nor grep's own status can
 # mask a failure or fake one.
 x240_kicad_py() {
-  x240_kicad "python3 $* >/tmp/py.log 2>&1; rc=\$?; grep -v 'm_group == nullptr' /tmp/py.log || true; exit \$rc"
+  x240_kicad "python3 $1 >/tmp/py.log 2>&1; rc=\$?; grep -v 'm_group == nullptr' /tmp/py.log || true; exit \$rc"
 }
 
 # Runs as the invoking user: the image's own uid (1000) only matches by luck, and in CI the
 # checkout belongs to uid 1001, so the generated files could not be written there.
 x240_kicad() {
   docker run --rm "$(x240_docker_tty)" --user "$(id -u):$(id -g)" -e HOME=/tmp -e XDG_CONFIG_HOME=/tmp/.config \
-    -v "$X240_PCB_DIR":/pcb -v "$X240_OUT/pcb":/out -w /pcb "$X240_KICAD_IMAGE" sh -c "$*"
+    -v "$X240_PCB_DIR":/pcb -v "$X240_OUT/pcb":/out -w /pcb "$X240_KICAD_IMAGE" sh -c "$1"
 }
 
 x240_build_pcb() {

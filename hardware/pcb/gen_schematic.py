@@ -4,8 +4,8 @@ gen_schematic.py — write x240_pico_rev_b.kicad_sch from netlist_model.py.
 
 Runs inside the kicad/kicad image (needs /usr/share/kicad/symbols). Every part is placed
 on a grid and every connected pin gets a global label carrying the net name; unconnected
-pins get no-connect flags. The real library symbol definitions are embedded, parents of
-`extends` symbols included, so the file opens in KiCad with nothing missing.
+pins get no-connect flags. The real library symbol definitions are embedded (derived
+`extends` symbols flattened, as KiCad caches them), so the file opens with nothing missing.
 
 Usage: gen_schematic.py <out_dir>
 """
@@ -103,7 +103,7 @@ def property_blocks(blk):
 def embedded_symbol(lib, name):
     """Symbol block renamed to Lib:Name.  A derived symbol (extends) is flattened the way
     KiCad itself caches it: the parent's body with the derived symbol's properties laid
-    over it and the units renamed.  Returns (text, None)."""
+    over it and the units renamed, so no parent has to be embedded separately."""
     blk = symbol_block(lib, name)
     ext = re.search(r'\(extends "([^"]+)"', blk)
     if ext:
@@ -114,8 +114,8 @@ def embedded_symbol(lib, name):
             body = body.replace(old, pblk, 1) if old else body.replace("\n\t\t(symbol \"", "\n\t\t" + pblk + "\n\t\t(symbol \"", 1)
         body = body.replace(f'(symbol "{parent}"', f'(symbol "{lib}:{name}"', 1)
         body = body.replace(f'(symbol "{parent}_', f'(symbol "{name}_')
-        return body, None
-    return blk.replace(f'(symbol "{name}"', f'(symbol "{lib}:{name}"', 1), None
+        return body
+    return blk.replace(f'(symbol "{name}"', f'(symbol "{lib}:{name}"', 1)
 
 
 # ------------------------------------------------------------------ layout
@@ -160,16 +160,12 @@ def main(out_dir):
     parts = [p for p in M.PARTS if M.LIB[p[1]][0]]          # holes have no symbol
     pos = place(parts)
 
-    # lib_symbols, with parents
+    # lib_symbols (derived symbols arrive flattened, so one entry per distinct symbol)
     libsyms = {}
     for _, kind, _ in parts:
         lib, name = M.LIB[kind][0].split(":")
-        if f"{lib}:{name}" in libsyms:
-            continue
-        txt, parent = embedded_symbol(lib, name)
-        libsyms[f"{lib}:{name}"] = txt
-        if parent and f"{lib}:{parent}" not in libsyms:
-            libsyms[f"{lib}:{parent}"] = embedded_symbol(lib, parent)[0]
+        if f"{lib}:{name}" not in libsyms:
+            libsyms[f"{lib}:{name}"] = embedded_symbol(lib, name)
 
     o = []
     o.append(f'(kicad_sch\n\t(version 20250114)\n\t(generator "x240_gen")\n\t(generator_version "9.0")\n\t(uuid "{ROOT_UUID}")\n\t(paper "{PAPER}")')
