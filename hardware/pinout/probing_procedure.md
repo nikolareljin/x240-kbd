@@ -7,8 +7,8 @@ keyboard and touchpad FPC cables before wiring them to the Pico.
 
 ## Equipment
 
-- Raspberry Pi Pico (flashed with CircuitPython)
-- 40-pin 0.5 mm ZIF FPC breakout board (Adafruit #1436 or equivalent)
+- Raspberry Pi Pico (flashed with CircuitPython) — the *same* Pico is reused for the build
+- 40-pin 0.5 mm FPC-to-DIP breakout **with a ZIF connector** (see `docs/hardware/components.md`; Adafruit #1436 is a bare solder-pad plate, not a ZIF breakout)
 - 6–12 pin 0.5 mm ZIF FPC breakout board (for touchpad)
 - Multimeter (continuity + DC voltage modes)
 - Logic analyser (cheap 8-channel USB type works fine) — for touchpad PS/2 sniffing
@@ -36,8 +36,12 @@ keyboard and touchpad FPC cables before wiring them to the Pico.
 4. Copy `tools/matrix_probe/matrix_probe.py` onto `CIRCUITPY`, rename to `code.py`.
 5. Open a serial terminal at 115200 baud (Thonny serial console works well).
 
+The 40-pad breakout has more pads than the Pico has GPIO (26). The script runs in
+**two passes**: wire pads 1–26 for pass A, then pads 15–40 for pass B (the overlap ties the
+two maps together). Record which pad is on which GPIO for each pass at the top of the script.
+
 The script will:
-- Iterate through all 40 pins (via the breakout's numbered pads)
+- Iterate through the wired pads
 - Drive each pin LOW while configuring all other pins as inputs with pull-ups
 - Display: `Press a key... ` and wait
 - When you press a key, it prints the two pin numbers that went LOW together
@@ -46,12 +50,21 @@ The script will:
 Work through every key on the keyboard. Keys that share a row will produce the same
 first pin number; keys in the same column share the second pin number.
 
-### A3. Build the row/column map
+### A3. Build the drive/sense map
 
 After scanning all keys, group the results:
 
-- **Rows**: the set of pins that appear as the "driven" pin across multiple keys
-- **Columns**: the remaining active pins
+- **Drive lines**: the set of pads that appear as the "driven" pad across multiple keys
+- **Sense lines**: the remaining active pads
+
+Count them. The smaller set goes to GP0–GP9 as drive lines; the larger set goes to the
+74HC165 chain as sense lines. If both are ≤ 10 you could skip the chain — but keep it; it
+is what makes the design survive a transposed or larger-than-expected matrix.
+
+### A3b. Ghosting test
+
+Hold A + S + D. If a fourth key appears, the membrane has no diodes and every sense line
+needs a 1N4148 at the breakout. Most ThinkPad membranes have them.
 
 Write the verified map into `hardware/pinout/x240_keyboard_fpc_pinout.md`.
 
@@ -77,6 +90,12 @@ is physically pressed (multimeter continuity mode).
 
 ---
 
+### A5. TrackPoint lines (only if Part B shows a standalone TrackPoint)
+
+If Part B finds no pass-through frames, two of the remaining keyboard FPC pins are the
+TrackPoint controller's CLK and DATA (and possibly a reset). Find them as in B3, with
+4.7 kΩ pull-ups, using the sniffer in plain PS/2 mode while pushing the stick.
+
 ## Part B — Touchpad FPC
 
 ### B1. Insert touchpad FPC
@@ -97,9 +116,22 @@ Insert the touchpad's FPC cable into the small breakout board the same way as ab
 3. Power the touchpad (VCC + GND from Pico).
 4. Move your finger on the touchpad surface.
 5. The serial console should show decoded PS/2 movement packets when CLK/DATA are
-   correctly identified. The CLK line toggles at ~10 kHz; a logic analyser makes
+   correctly identified. The CLK line toggles at ~10–16 kHz; a logic analyser makes
    it easy to spot visually even before decoding.
 6. If no output: swap the candidate pins for CLK and DATA and retry.
+7. For the build, DATA goes to **GP21** and CLK to **GP22** — the RP2040 PIO driver needs
+   clock = data + 1.
+
+### B3b. Confirm the TrackPoint route
+
+Switch the sniffer to Synaptics mode (it sends the identify sequence and enables absolute
+mode with pass-through). Push the stick with no finger on the pad:
+
+- Packets with `W == 3` ⇒ the TrackPoint rides this bus. **Done — no extra wiring.**
+- No such packets ⇒ go to A5 and wire the TrackPoint's own line to GP20/GP19.
+
+Record the result in `x240_clickpad_fpc_pinout.md`. This single observation decides the
+firmware path; do not skip it.
 
 ### B4. Identify LED pins
 

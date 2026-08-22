@@ -1,191 +1,179 @@
-# x240-pico-kbd
+# x240-kbd
 
-A standalone USB keyboard and pointing device built from a ThinkPad X240 keyboard
-assembly (part 0C44020) and ClickPad touchpad, controlled by a Raspberry Pi Pico
-(RP2040) running QMK firmware.
+A standalone USB keyboard with touchpad **and TrackPoint**, built from a ThinkPad X240
+keyboard assembly (FRU 0C44020) and its Synaptics ClickPad, driven by a Raspberry Pi Pico
+(RP2040) running QMK.
 
-Works on **any OS without drivers** — enumerates as a standard USB HID composite
-device (keyboard + mouse + media keys).
+Works on **any OS without drivers** — it enumerates as a standard USB HID composite device
+(keyboard + mouse + media keys).
+
+> **Project status: design, not yet built.** The matrix pinout is unverified until the
+> probing step runs on real hardware, and the TrackPoint route (via the ClickPad's PS/2
+> pass-through) is the expected architecture, confirmed by the same step. Everything else
+> here is designed to survive either answer. Track progress in the
+> [issues](https://github.com/nikolareljin/x240-kbd/issues) — nine milestones from
+> documentation to release.
 
 ---
 
 ## Features
 
 - Full 84-key ThinkPad X240 layout (QWERTY, US)
-- ClickPad touchpad (Synaptics, PS/2) — cursor, left/right click
-- FN layer with all ThinkPad media/system key mappings
-- FN Lock toggle (FN+Esc)
-- Keyboard backlight with 5 brightness levels + breathing effect
-- Power button with long-press guard (500 ms) → OS sleep/power dialog
+- Synaptics ClickPad — cursor, left/right click zones
+- **TrackPoint** — via the ClickPad's pass-through port, decoded in firmware
+- FN layer with the ThinkPad media/system keys; FN Lock (FN + Esc)
+- Keyboard backlight, 5 levels + breathing (backlit keyboard variants)
+- Power button with a 500 ms long-press guard → OS power/sleep
 - Touchpad indicator LED
-- N-Key Rollover (NKRO)
-- USB Micro-USB output (USB-C upgrade path below)
-- 3D-printed bottom enclosure (OpenSCAD), reuses X240 top section
+- N-Key Rollover
+- Micro-USB; documented USB-C upgrade
+- Two enclosure routes: **3D-printed** (split case) or **hand-made with no printer**
+- Two electronics revisions: **Rev A perfboard** and **Rev B KiCad PCB**, same firmware
 
 ---
 
-## Hardware Overview
+## Hardware at a glance
 
 | Component | Detail |
 |---|---|
-| Controller | Raspberry Pi Pico (RP2040) |
-| Keyboard FPC | 40-pin, 0.5 mm pitch, ZIF |
-| Touchpad | Synaptics ClickPad, PS/2, separate FPC |
-| Power button | Integrated in keyboard assembly |
-| Backlight | Keyboard LED strip via 2N7002 MOSFET |
-| USB output | Micro-USB (built-in Pico) |
-| Enclosure | 3D-printed PETG bottom + X240 top section |
-| Build style | Perfboard + 30 AWG wire (no PCB fab needed) |
+| Controller | Raspberry Pi Pico, RP2040, 26 GPIO |
+| Keyboard | X240 0C44020, 40-pin 0.5 mm FPC; matrix size **measured by probing** |
+| Sense expansion | 3 × 74HC165 shift registers — 24 sense lines on 3 GPIO |
+| Touchpad + TrackPoint | Synaptics ClickPad, PS/2 on GP21/GP22 (RP2040 PIO driver) |
+| Backlight | LED strip via 2N7002/BS170 MOSFET on GP26 |
+| Power button | GP27, active LOW |
+| USB | Micro-USB; USB-C via the Pico's TP1/TP2/TP3 pads |
+| Enclosure | Printed split case, or the original X240 base cover, laser-cut plates, a Hammond console or wood |
 
-### Estimated Cost: ~$25–35 USD
+Why a shift register: the closest documented ThinkPad keyboard of this era needs 26 matrix
+lines — every GPIO the Pico has. [`docs/hardware/gpio-budget.md`](docs/hardware/gpio-budget.md).
 
-See [`BOM.md`](BOM.md) for the full parts list.
+### Cost
 
----
-
-## Repository Structure
-
-```
-x240-pico-kbd/
-├── firmware/qmk/keyboards/x240_pico/   QMK keyboard definition
-├── hardware/pinout/                     FPC pin maps (filled after probing)
-├── hardware/wiring/                     Wiring diagram and GPIO table
-├── tools/matrix_probe/                  CircuitPython FPC probing script
-├── tools/ps2_sniffer/                   CircuitPython PS/2 bus monitor
-├── cad/                                 OpenSCAD bottom enclosure
-└── docs/                                Project structure, design, and code docs
-```
-
-See [`docs/README.md`](docs/README.md) for the full project documentation index.
-
----
-
-## Quick Start
-
-### 1. Buy parts
-
-See [`BOM.md`](BOM.md).
-
-### 2. Probe FPC pinout (mandatory first step)
-
-Flash the Pico with CircuitPython, copy `tools/matrix_probe/matrix_probe.py` to it,
-and follow [`hardware/pinout/probing_procedure.md`](hardware/pinout/probing_procedure.md).
-Do **not** wire to the Pico before the pinout is confirmed.
-
-### 3. Build firmware
-
-```bash
-# Install QMK
-pip install qmk
-qmk setup
-
-# Copy keyboard definition
-cp -r firmware/qmk/keyboards/x240_pico \
-      ~/qmk_firmware/keyboards/x240_pico
-
-# Compile
-qmk compile -kb x240_pico -km default
-
-# Flash (hold BOOTSEL on Pico, then plug USB)
-qmk flash -kb x240_pico -km default
-```
-
-### 4. Wire perfboard
-
-Follow [`ASSEMBLY.md`](ASSEMBLY.md) — Phase 2.
-
-### 5. Print enclosure
-
-Open `cad/bottom_case.scad` in OpenSCAD. Adjust the parameters section to match your
-measured X240 dimensions, export STL, print in PETG.
-
----
-
-## FN Key Map
-
-| FN + Key | Action |
+| Build | All-in (USD, Aug 2026) |
 |---|---|
-| F1 | Mute |
-| F2 | Volume Down |
-| F3 | Volume Up |
-| F4 | Mic Mute (KC_F20) |
-| F5 | Brightness Down |
-| F6 | Brightness Up |
-| F7 | External Display |
-| F8 | Wireless Toggle |
-| F9 | Settings |
-| F10 | Bluetooth |
-| F11 | Keyboard Backlight Toggle |
-| F12 | Print Screen |
-| PgUp | Home |
-| PgDn | End |
-| Left | Previous Track |
-| Right | Next Track |
-| Esc | **FN Lock toggle** |
+| Rev A + your own printer | **$90–130** |
+| Rev A + reused X240 base cover, no printer | **$110–150** |
+| Rev B PCB | add $25–35 |
+
+The donor keyboard and palmrest are most of it. Full tiers and part links:
+[`docs/hardware/bom-and-cost.md`](docs/hardware/bom-and-cost.md).
 
 ---
 
-## USB-C Upgrade (Optional)
+## Repository structure
 
-The default build uses the Pico's built-in Micro-USB port. To add USB-C:
-
-1. Solder a USB-C female breakout board to the Pico's test pads:
-   - TP1 → D−
-   - TP2 → D+
-   - VBUS and GND
-2. Route it to a USB-C cutout in the printed bottom case (`cad/bottom_case.scad`
-   has an `usb_c = true` parameter that swaps the cutout shape).
-3. No firmware changes required.
-
-![USB-C Breakout Wiring to Raspberry Pi Pico](docs/images/usb_c_wiring.png)
-
-Alternatively, use a **Pimoroni Pico LiPo** which has USB-C natively and the same
-26 GPIO pinout.
+```
+x240-kbd/
+├── firmware/qmk/keyboards/x240_pico/   QMK keyboard definition (corrected in milestone M4)
+├── hardware/pinout/                     FPC pin maps — filled by probing
+├── hardware/wiring/                     GPIO table (the single authoritative copy) and schematics
+├── hardware/pcb/                        Rev B KiCad project (milestone M7)
+├── tools/matrix_probe/                  CircuitPython matrix discovery
+├── tools/ps2_sniffer/                   CircuitPython PS/2 + Synaptics sniffer
+├── cad/                                 OpenSCAD: split case and small printed parts
+└── docs/                                The documentation site (GitHub Pages from /docs)
+    ├── hardware/                        components, BOM & cost, GPIO budget, sense chain, TrackPoint, backlight, PCB
+    ├── firmware/                        architecture, QMK configuration, pointing stack
+    ├── enclosure/                       printed, hand-made, integration, durability, presentation
+    ├── references.md · glossary.md
+    └── images/
+```
 
 ---
 
-## Flashing / Bootloader
+## Quick start
 
-- **First flash:** hold BOOTSEL button while plugging in USB → Pico appears as `RPI-RP2`
-  drive → drag `.uf2` file onto it.
-- **Subsequent flashes:** `qmk flash` uses QMK's Bootmagic — hold the top-left key
-  (Esc) while plugging in to enter bootloader.
-- **Manual bootloader:** hold BOOTSEL and tap RESET if a reset button is wired to RUN
-  pad (optional, recommended for the final build).
+1. **Read the component reference and buy parts** —
+   [`docs/hardware/components.md`](docs/hardware/components.md),
+   [`docs/hardware/bom-and-cost.md`](docs/hardware/bom-and-cost.md).
+2. **Probe the FPC pinouts — mandatory first step.** Flash CircuitPython, run
+   `tools/matrix_probe/matrix_probe.py`, then `tools/ps2_sniffer/ps2_sniffer.py`, following
+   [`hardware/pinout/probing_procedure.md`](hardware/pinout/probing_procedure.md). Do not
+   wire the Pico to anything before this is done.
+3. **Build the Rev A adapter** — [`ASSEMBLY.md`](ASSEMBLY.md) Phase 2, using
+   [`hardware/wiring/wiring_diagram.md`](hardware/wiring/wiring_diagram.md).
+4. **Build and flash firmware** —
+
+   ```bash
+   pip install qmk && qmk setup
+   cp -r firmware/qmk/keyboards/x240_pico ~/qmk_firmware/keyboards/x240_pico
+   qmk compile -kb x240_pico -km default
+   qmk flash   -kb x240_pico -km default      # hold BOOTSEL while plugging in
+   ```
+
+   The current definition is corrected in milestone M4 (custom matrix, PIO PS/2 driver,
+   Synaptics decoding); see [`docs/firmware/qmk-configuration.md`](docs/firmware/qmk-configuration.md).
+5. **Choose an enclosure** — printed:
+   [`docs/enclosure/printed.md`](docs/enclosure/printed.md); no printer:
+   [`docs/enclosure/handmade.md`](docs/enclosure/handmade.md).
+6. **Close it up** — [`docs/enclosure/presentation.md`](docs/enclosure/presentation.md)
+   has the assembly order.
+
+---
+
+## FN key map
+
+| FN + | Action | | FN + | Action |
+|---|---|---|---|---|
+| F1 | Mute | | F9 | Settings |
+| F2 | Volume down | | F10 | Bluetooth |
+| F3 | Volume up | | F11 | **Backlight step** |
+| F4 | Mic mute (F20) | | F12 | Print Screen |
+| F5 | Brightness down | | PgUp / PgDn | Home / End |
+| F6 | Brightness up | | Left / Right | Previous / next track |
+| F7 | External display | | Esc | **FN Lock** |
+| F8 | Wireless toggle | | | |
+
+---
+
+## USB-C upgrade (optional)
+
+Wire a USB-C female breakout (one with 5.1 kΩ CC pull-downs) to the pads on the Pico's
+underside:
+
+| Pico pad | Signal | Breakout |
+|---|---|---|
+| **TP1** | **GND** | GND |
+| **TP2** | **USB D−** | D− |
+| **TP3** | **USB D+** | D+ |
+| VBUS (pin 40) | 5 V | VBUS |
+
+Set `usb_c = true` in `cad/bottom_case.scad` for the USB-C cutout. No firmware change.
+
+> The illustration [`docs/images/usb_c_wiring.png`](docs/images/usb_c_wiring.png) is
+> decorative; its pad labels predate this table and are **not** the wiring reference.
+> Source: [Pico datasheet, test points](https://datasheets.raspberrypi.com/pico/pico-datasheet.pdf).
+
+Alternatively use a **Pimoroni Pico LiPo** (USB-C native, same pinout).
+
+---
+
+## Flashing
+
+- **First flash:** hold BOOTSEL while plugging in → `RPI-RP2` drive → drag the `.uf2`.
+- **After that:** `qmk flash`, or hold the top-left key (Esc) while plugging in (Bootmagic).
+- **Recommended:** wire a tactile switch to the Pico's `RUN` pad, reachable through the
+  case, so BOOTSEL + reset works without opening anything.
 
 ---
 
 ## Documentation
 
-- [`docs/project-structure.md`](docs/project-structure.md) - repository layout and file ownership
-- [`docs/design-instructions.md`](docs/design-instructions.md) - electrical, mechanical, firmware, and documentation design rules
-- [`docs/code-instructions.md`](docs/code-instructions.md) - QMK, CircuitPython, and OpenSCAD coding standards
-- [`docs/build-and-test.md`](docs/build-and-test.md) - probe, build, flash, and validation workflow
-- [`CHANGELOG.md`](CHANGELOG.md) - notable project changes
-
----
-
-## Repository
-
-Repository: [nikolareljin/x240-kbd](https://github.com/nikolareljin/x240-kbd)
+The site is built from `docs/` (GitHub Pages, milestone M1). Start at
+[`docs/README.md`](docs/README.md). Builder guides: [`ASSEMBLY.md`](ASSEMBLY.md),
+[`PLAN.md`](PLAN.md). Changes: [`CHANGELOG.md`](CHANGELOG.md).
 
 ## References
 
-- [hamishcoleman/thinkpad-usbkb](https://github.com/hamishcoleman/thinkpad-usbkb) — ThinkPad FPC pinout research
-- [thedalles77/USB_Laptop_Keyboard_Controller](https://github.com/thedalles77/USB_Laptop_Keyboard_Controller) — matrix decoder method
-- [QMK RP2040 platform](https://docs.qmk.fm/platformdev_rp2040)
-- [QMK PS/2 Mouse](https://docs.qmk.fm/features/ps2_mouse)
-- [QMK Pointing Device](https://docs.qmk.fm/features/pointing_device)
-- [QMK Backlighting](https://docs.qmk.fm/features/backlight)
-- [QMK issue #24470](https://github.com/qmk/qmk_firmware/issues/24470) — RP2040 PWM backlight workaround
+Annotated list in [`docs/references.md`](docs/references.md). The projects this one stands
+on: [delingren/thinkpad_keyboards](https://github.com/delingren/thinkpad_keyboards),
+[hamishcoleman/thinkpad-usbkb](https://github.com/hamishcoleman/thinkpad-usbkb),
+[thedalles77/USB_Laptop_Keyboard_Controller](https://github.com/thedalles77/USB_Laptop_Keyboard_Controller).
 
----
+## Repository
 
-## License
-
-GPL-2.0 — matching QMK firmware license.
-
----
+[nikolareljin/x240-kbd](https://github.com/nikolareljin/x240-kbd) · GPL-2.0, matching QMK.
 
 ## Clone traffic
 
