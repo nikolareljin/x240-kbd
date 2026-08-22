@@ -36,6 +36,9 @@ commit; `scripts/pull_toolchain.sh` pulls them (`--save`/`--load` for offline ta
 `--refresh` to re-resolve, `--verify` to print versions). `./dev install` and `./dev
 update` go through it, so a build is repeatable later.
 
+`docs/presentation/` holds the printable label (`label.svg`, 60 × 40 mm) and the A6
+quick-start card.
+
 `.github/workflows/ci.yml` calls ci-helpers' reusable `ci.yml@production` with
 `./dev test` and `./dev install && ./dev build all`.
 
@@ -64,7 +67,8 @@ is unit-tested on a PC under `tools/tests/` (pytest). Index: `tools/README.md`.
 OpenSCAD sources, all including `params.scad` (the only place a dimension lives): the
 split `bottom_case`, `perfboard_sled`, `usb_strain_relief`, `tilt_feet`, `zif_support_block`,
 `led_light_pipe`, `pico_mount_bracket`, `fpc_cable_guide`; `tests/joint_intersection.scad`
-is the split-joint check run by `./dev test`. `export_plates` (DXF, M6) is still to come.
+is the split-joint check run by `./dev test`; `export_plates.scad` projects the same solids
+into the laser-cut plates and the box insert (DXF).
 `./dev build cad` renders to `out/cad/`; meshes are never committed. Index: `cad/README.md`.
 
 ## `docs/`

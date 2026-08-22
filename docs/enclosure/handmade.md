@@ -54,42 +54,75 @@ Serviceability is the stock laptop's: remove the screws and the cover lifts off.
 
 ## E2 — Laser-cut sandwich
 
-A flat bottom plate plus two or three perimeter spacer frames, stacked and bolted with M3
-standoffs, laser-cut from 3 mm acrylic or 1.5 mm aluminium.
+A flat bottom plate plus perimeter spacer frames, stacked and bolted with M3 standoffs.
 
-- Geometry comes from the **same OpenSCAD source** as the printed case:
-  `cad/export_plates.scad` uses `projection(cut = true)` at the relevant Z heights and
-  exports DXF. The two routes cannot drift apart.
-- Upload the DXFs to [SendCutSend](https://sendcutsend.com/) or
-  [Ponoko](https://www.ponoko.com/); both quote instantly. Budget $30–60 for the set.
-- Stack: bottom plate → spacer frames (height = the internal stack, ~18 mm) → the deck.
-  M3 × 20 mm standoffs at the X240 boss positions.
-- Acrylic shows the electronics; aluminium is stiffer and grounds the shield. Both need
-  rubber feet.
+**Files.** `./dev build cad` writes them to `out/cad/`, all derived from the same solids
+as the printed case by `cad/export_plates.scad` (`projection(cut = true)`), so the two
+routes cannot drift apart:
+
+| DXF | What | Material |
+|---|---|---|
+| `plate_bottom.dxf` | Floor outline with every hole: M3 at the deck bosses, M2 for the sled, light pipe, feet, tilt feet, reset | 3 mm cast acrylic **or** 1.5 mm 5052 aluminium |
+| `plate_spacer.dxf` | Perimeter ring, `wall_t` wide, with the USB notch in the rear edge and the M3 holes | 3 mm acrylic × 6, or 12 mm plywood × 1, or 6 mm acrylic × 3 — whatever sums to `internal_h` (18 mm) |
+| `plates_sheet.dxf` | Bottom + spacer + box insert on one sheet | one upload |
+
+**Order.** Upload the DXF to [SendCutSend](https://sendcutsend.com/) (aluminium, acrylic)
+or [Ponoko](https://www.ponoko.com/) (acrylic, plywood); both quote instantly. Outlines are
+nominal — the service applies kerf. Budget $30–60 for a bottom plate and six acrylic rings.
+
+**Hardware.** 8 × M3 × 20 mm F-F standoffs (or 8 × M3 × 25 mm bolts + nuts), 8 × M3 × 6 mm
+screws into the deck's bosses from below, M2 × 6 mm for the sled, 4 rubber feet.
+
+**Stack**, bottom to top: plate → rings (2–3 mm foam tape between the top ring and the
+deck as the gasket) → deck. The sled bolts to the plate through its four M2 holes; the USB
+cable leaves through the notch, with a cable tie through two extra 4 mm holes you drill
+20 mm inboard.
+
+Acrylic shows the electronics; aluminium is stiffer and can be bonded to the board's GND
+through one standoff. Both need feet.
 
 ## E3 — Hammond sloped console
 
 [Hammond 515-0950](https://www.hammfg.com/electronics/small-case/general-purpose/500-515-519)
 — 300 × 200 × 58 mm steel/aluminium sloped-front console, ~$50–60. The X240 deck is
-309 × 210 mm, so it **overhangs 4–5 mm per side**.
+309 × 210 mm, so it **overhangs 4–5 mm per side**; that is acceptable — the deck's own
+edge hides the console's edge.
 
-- Cut the console's top opening 5 mm inboard of the deck outline; the deck sits on the
-  remaining lip, screwed from below through the console top into the deck's bosses.
-- Electronics mount to the console floor on adhesive standoffs. The USB cable leaves via a
-  rear grommet.
-- The sloped front gives a wrist-friendly typing angle; the extra internal height is
-  wasted but harmless.
+1. **Mark** the opening on the console's top panel: print `plate_spacer.dxf` at 1:1 (or
+   trace the deck) and draw the outline **5 mm inboard** all round. Mark the 8 boss
+   positions from `params.scad` (`deck_boss_positions`).
+2. **Cut** the opening with a nibbler or a jigsaw (fine metal blade), file the edge,
+   deburr. Keep the cut-out panel — it becomes a template for the gasket foam.
+3. **Drill** the 8 boss holes at 3.5 mm in the remaining lip; countersink from below.
+4. **Mount** the board on adhesive M2 standoffs on the console floor, rear-centre, with
+   the USB cable to a rear grommet (`cable_d` 4.5 mm → 6 mm grommet hole).
+5. **Fit** the deck: foam tape on the lip, deck down, M3 screws from below into the bosses.
+
+The sloped front gives a wrist-friendly angle; the spare internal height is harmless.
 
 ## E4 — Wood frame
 
-A 6 mm plywood base with a hardwood perimeter (12 × 20 mm strip) mitred at the corners.
+A 6 mm plywood base with a hardwood perimeter, height `internal_h` (18 mm) so the stack
+matches the printed case.
 
-- Cut list: base 309 × 210; two sides 210 × 20 × 12; front and back 309 × 20 × 12.
-- Glue and pin the frame to the base; sand; oil or lacquer.
-- The deck sits on the frame's top edge; screw up through the base into the deck's bosses
-  using M2 × 12 mm screws with washers (drill pilot holes at the boss positions, measured
-  from the palmrest).
-- Electronics on adhesive standoffs; USB through a drilled hole with a rubber grommet.
+**Cut list** (finished sizes; mitre the strips at 45° or butt-join and plug):
+
+| Piece | Size | Qty |
+|---|---|---|
+| Base, 6 mm birch ply | 309 × 210 | 1 |
+| Side strip, hardwood 18 × 12 | 210 long | 2 |
+| Front/back strip, hardwood 18 × 12 | 309 long (285 inside the sides if butt-joined) | 2 |
+| Rear strip USB notch | 15 wide × 10 deep, centred on `usb_x` | — |
+
+**Sequence.** Cut the base square (check diagonals). Glue and pin the strips flush with
+the base edge, USB notch cut first. Clamp, cure, sand to 180, break the edges. Finish
+(oil is forgiving; lacquer is harder). Drill the 8 boss positions through the base at
+2.5 mm (print `plate_bottom.dxf` 1:1 as the template) and countersink from below. Fit
+rubber feet at `foot_positions`.
+
+**Mount.** Board on adhesive M2 standoffs; cable tie through two 4 mm holes for strain
+relief; foam tape on the frame's top edge; deck on; M2 × 12 mm screws with washers up
+into the bosses.
 
 ## Common to all hand-made variants
 
