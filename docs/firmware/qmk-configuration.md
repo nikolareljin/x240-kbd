@@ -18,7 +18,7 @@ had it wrong — what changed and why.
 | `BOOTMAGIC_ENABLE` | `yes` | [Bootmagic](https://docs.qmk.fm/features/bootmagic) | Hold top-left key at plug-in → bootloader |
 | `EXTRAKEY_ENABLE` | `yes` | [Keycodes](https://docs.qmk.fm/keycodes) | Media and system keys (`KC_SYSTEM_POWER`) |
 | `MOUSEKEY_ENABLE` | `yes` | [Mouse keys](https://docs.qmk.fm/features/mouse_keys) | Optional; the pointing device does not need it |
-| `NKRO_ENABLE` | `yes` | [NKRO](https://docs.qmk.fm/keycodes_magic) | With `FORCE_NKRO` in `config.h` |
+| `NKRO_ENABLE` | `yes` | [NKRO](https://docs.qmk.fm/keycodes_magic) | `features.nkro` in keyboard.json; on by default via `host.default.nkro` (`FORCE_NKRO` is deprecated) |
 | `CUSTOM_MATRIX` | `lite` | [Custom matrix](https://docs.qmk.fm/custom_matrix) | **Changed** — the 74HC165 chain needs `matrix_scan_custom()` |
 | `SRC` | `+= matrix.c synaptics.c trackpoint.c` | | **Changed** — new sources |
 | `CONSOLE_ENABLE` | `yes` | [Debugging](https://docs.qmk.fm/faq_debug) | bring-up: `synaptics.c` logs identify/fallback via `dprintf` |
@@ -100,8 +100,8 @@ records and is what we use. Detail in [`../hardware/backlight.md`](../hardware/b
 | `DEBOUNCE` | `5` | ms, QMK default algorithm |
 | `MATRIX_IO_DELAY` | `30` | µs settle after driving a line LOW, before `PL` |
 | `MATRIX_DRIVE_PINS` | `{ GP0, …, GP9 }` | drive lines, consumed by `matrix.c` |
-| `SENSE_PL_PIN` / `SENSE_CP_PIN` / `SENSE_Q7_PIN` | `GP17` / `GP18` / `GP16` | chain control; CP/Q7 are SPI0 SCK/RX |
-| `SENSE_CHAIN_BITS` | `24` | 3 × 74HC165 |
+| `SENSE_PL_PIN` | `GP17` | 74HC165 parallel-load latch, driven by `matrix.c` |
+| `SENSE_CHAIN_BYTES` | `3` | 3 × 74HC165 = 24 sense lines; `MATRIX_COLS` must equal 8 × this |
 | `SPI_DRIVER` / `SPI_SCK_PIN` / `SPI_MISO_PIN` / `SPI_MOSI_PIN` | `SPID0` / `GP18` / `GP16` / `NO_PIN` | QMK SPI master on RP2040 SPI0; `halconf.h` sets `HAL_USE_SPI`, `mcuconf.h` sets `RP_SPI_USE_SPI0` |
 | `SENSE_SPI_DIVISOR` | `16` | ≈7.8 MHz on the 125 MHz peripheral clock |
 | `SYN_TOUCHPAD_DIVISOR` | `8` | absolute units per HID count |
@@ -115,7 +115,7 @@ records and is what we use. Detail in [`../hardware/backlight.md`](../hardware/b
 | `POWER_BUTTON_PIN` | `GP27` | active LOW, internal pull-up |
 | `POWER_BUTTON_HOLD_MS` | `500` | long-press guard |
 | `TOUCHPAD_LED_PIN` | `GP28` | HIGH = on |
-| `FORCE_NKRO` | defined | |
+| *(keyboard.json `host.default.nkro`)* | `true` | NKRO on at boot; replaces the deprecated `FORCE_NKRO` |
 | *(keyboard.json `bootmagic.matrix`)* | `[0, 0]` | top-left key enters the bootloader at plug-in |
 
 **Removed:** the comment claiming GP21/GP22 are "UART0 CTS/TX / RX". On the RP2040, UART0

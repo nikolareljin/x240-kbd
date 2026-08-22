@@ -13,7 +13,7 @@ and are corrected there.
 | File | Owns | Status |
 |---|---|---|
 | `keyboard.json` | USB IDs, `processor`/`bootloader`, feature flags, the `ps2` block, layout metadata. `matrix_pins` is **removed** — the custom matrix owns pins. | exists, corrected in M4 |
-| `config.h` | Sense-chain pins (`SENSE_PL_PIN`, `SENSE_CP_PIN`, `SENSE_Q7_PIN`), drive-line list, SPI settings, debounce, backlight, power button, LED, Synaptics tuning constants | exists, corrected in M4 |
+| `config.h` | Sense chain (`SENSE_PL_PIN`, `SENSE_CHAIN_BYTES`, `SENSE_SPI_DIVISOR`), SPI0 pins (`SPI_DRIVER`, `SPI_SCK_PIN`, `SPI_MISO_PIN`, `SPI_MOSI_PIN`), `MATRIX_DRIVE_PINS`, debounce, backlight, power button, LED, `SYN_*` tuning | exists, corrected in M4 |
 | `rules.mk` | `CUSTOM_MATRIX = lite`, `POINTING_DEVICE_DRIVER = custom`, `PS2_ENABLE = yes` + `PS2_DRIVER = vendor`, `PS2_MOUSE_ENABLE = no`, `BACKLIGHT_DRIVER = software`, `SRC += matrix.c synaptics.c trackpoint.c` | corrected in M4 |
 | `halconf.h` / `mcuconf.h` | `HAL_USE_SPI`, `RP_SPI_USE_SPI0` — ChibiOS needs SPI0 switched on for the sense chain | **new** |
 | `matrix.c` | Drive-line sequencing and the 74HC165 chain read | **new** |
