@@ -13,12 +13,13 @@ and are corrected there.
 | File | Owns | Status |
 |---|---|---|
 | `keyboard.json` | USB IDs, `processor`/`bootloader`, feature flags, the `ps2` block, layout metadata. `matrix_pins` is **removed** — the custom matrix owns pins. | exists, corrected in M4 |
-| `config.h` | Sense-chain pins (`SENSE_PL_PIN`, `SENSE_CP_PIN`, `SENSE_Q7_PIN`), drive-line list, SPI settings, debounce, backlight, power button, LED, Synaptics tuning constants | exists, corrected in M4 |
-| `rules.mk` | `CUSTOM_MATRIX = lite`, `PS2_DRIVER = vendor`, `BACKLIGHT_DRIVER = software`, `SRC += matrix.c synaptics.c trackpoint.c` | exists, corrected in M4 |
+| `config.h` | Sense chain (`SENSE_PL_PIN`, `SENSE_CHAIN_BYTES`, `SENSE_SPI_DIVISOR`), SPI0 pins (`SPI_DRIVER`, `SPI_SCK_PIN`, `SPI_MISO_PIN`, `SPI_MOSI_PIN`), `MATRIX_DRIVE_PINS`, debounce, backlight, power button, LED, `SYN_*` tuning | exists, corrected in M4 |
+| `rules.mk` | `CUSTOM_MATRIX = lite`, `POINTING_DEVICE_DRIVER = custom`, `PS2_ENABLE = yes` + `PS2_DRIVER = vendor`, `PS2_MOUSE_ENABLE = no`, `BACKLIGHT_DRIVER = software`, `SRC += matrix.c synaptics.c trackpoint.c` | corrected in M4 |
+| `halconf.h` / `mcuconf.h` | `HAL_USE_SPI`, `RP_SPI_USE_SPI0` — ChibiOS needs SPI0 switched on for the sense chain | **new** |
 | `matrix.c` | Drive-line sequencing and the 74HC165 chain read | **new** |
-| `synaptics.c` / `.h` | ClickPad identify, mode byte, 6-byte packet parser, touchpad delta | **new** |
+| `synaptics.c` / `.h` | The custom pointing-device driver: ClickPad reset/identify/capabilities, mode byte, guest enable, 6-byte packet parser with resync, touchpad delta, logged relative-mode fallback | **new** |
 | `trackpoint.c` / `.h` | Guest (pass-through) frame decode, TrackPoint delta and scaling | **new** |
-| `x240_pico.c` | `keyboard_post_init_kb` (LED on, power-button pull-up), `matrix_scan_kb` (power-button long-press guard), `pointing_device_task_kb` (merges the two pointing sources) | exists |
+| `x240_pico.c` | `keyboard_post_init_kb` (LED on, power-button pull-up), `matrix_scan_kb` (power-button long-press guard), `pointing_device_task_kb` (pass-through; merge happens in `synaptics.c`) | exists |
 | `x240_pico.h` | `LAYOUT` macro, custom keycodes `CK_BKLT`/`CK_FNLK`, layer enum | exists; `LAYOUT` regenerated from the measured matrix |
 | `keymaps/default/keymap.c` | `_BASE` and `_FN` layers, `process_record_user` | exists; regenerated from the measured matrix |
 
@@ -42,11 +43,13 @@ GP0..GP9 drive line LOW
 ```
 ClickPad + TrackPoint guest  ──PS/2──►  GP21 DATA / GP22 CLK
    → QMK vendor PS/2 driver (RP2040 PIO0)         platforms/chibios/drivers/vendor/RP/RP2040/ps2_vendor.c
-      → ps2_host_recv() bytes
-         → synaptics.c assembles 6-byte packets
+      → pbuf_has_data() / ps2_host_recv() bytes
+         → synaptics.c (custom pointing driver) assembles 6-byte packets
             ├─ W != 3 : touchpad frame  → finger delta, L/R from byte 0    synaptics.c
             └─ W == 3 : guest frame     → TrackPoint 3-byte packet          trackpoint.c
-               → pointing_device_task_kb() merges into one report_mouse_t   x240_pico.c
+               → both add into one report_mouse_t inside                    synaptics.c
+                 pointing_device_driver_get_report()
+                  → pointing_device_task_kb() passes it through              x240_pico.c
                   → USB HID mouse report
 ```
 
@@ -59,9 +62,10 @@ Never a silent success.
 | Hook | Used for | Not used for |
 |---|---|---|
 | `matrix_init_custom` / `matrix_scan_custom` | the chain | anything else — keep the scan loop minimal |
-| `keyboard_post_init_kb` | GPIO setup, Synaptics init (after USB is up, so failures can be logged) | keymap logic |
+| `keyboard_post_init_kb` | LED and power-button GPIO setup | keymap logic |
+| `pointing_device_driver_init` | Synaptics init; failures logged on the console | matrix |
 | `matrix_scan_kb` | power-button timing only | side effects on the matrix |
-| `pointing_device_task_kb` | merging touchpad + TrackPoint, axis inversion | raw PS/2 reads |
+| `pointing_device_task_kb` | pass-through only (merge and Y inversion happen in the driver) | pointing logic |
 | `process_record_user` | `CK_BKLT`, `CK_FNLK` | hardware polling |
 
 ## Build
@@ -72,6 +76,7 @@ qmk compile -kb x240_pico -km default
 qmk flash   -kb x240_pico -km default     # hold BOOTSEL, or Bootmagic top-left key
 ```
 
-Until M4 lands, the definition **does not compile** — `PS2_DRIVER = usart` is not valid on
-RP2040 and the `matrix_pins` block conflicts with the intended custom matrix. That is
-expected and tracked; do not "fix" it by reverting to the 8 × 13 placeholder.
+Local build without installing a toolchain: the `qmkfm/qmk_cli` docker image plus a
+`qmk_firmware` checkout, with this directory mounted at `keyboards/x240_pico`. The
+placeholder `LAYOUT` still describes the old 8 × 13 arrangement inside the 10 × 24 matrix;
+issue #38 regenerates it from the measured pinout.

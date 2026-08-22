@@ -20,13 +20,26 @@ standalone USB HID device driven by a Raspberry Pi Pico running QMK.
 | `AGENTS.md` | Repository guidelines for agents and contributors |
 | `LICENSE` | GPL-2.0 |
 
+## `./dev` and `scripts/`
+
+`./dev` is the one entry point (`scripts/cli.sh`, copied from the script-helpers
+`templates/dev-cli` and never edited here). Repo behaviour lives in `scripts/project.sh`:
+build = `qmk compile` in the `qmkfm/qmk_cli` container against a `qmk_firmware` checkout
+(`./dev install` clones one; `QMK_HOME` overrides), docs = Jekyll in Docker, test = pytest
++ `scripts/check_links.py` + shellcheck, deploy = copy to `RPI-RP2` / `CIRCUITPY`.
+`scripts/script-helpers/` is the submodule (branch `production`). Shims: `./build`,
+`./test`, `./flash`, `./probe`, `./site`. Output: `out/` (ignored).
+
+`.github/workflows/ci.yml` calls ci-helpers' reusable `ci.yml@production` with
+`./dev test` and `./dev install && ./dev build all`.
+
 ## `firmware/qmk/keyboards/x240_pico/`
 
-Copied into a QMK checkout to build. `keyboard.json` (USB IDs, `ps2` block, layout
-metadata), `config.h` (pins, timing, tuning), `rules.mk` (features, drivers, extra sources),
-`x240_pico.c/.h` (keyboard-level hooks, LAYOUT), `keymaps/default/keymap.c`. Milestone M4
-adds `matrix.c`, `synaptics.c/.h`, `trackpoint.c/.h`. Until then the definition does not
-build — see `docs/firmware/architecture.md`.
+Mounted into a QMK checkout to build. `keyboard.json` (USB IDs, `ps2` block, NKRO
+default, Bootmagic key, layout metadata — QMK generates `LAYOUT` from it), `config.h`
+(pins, SPI, tuning), `rules.mk` (custom matrix, custom pointing driver, software backlight),
+`halconf.h`/`mcuconf.h` (SPI0 on), `matrix.c`, `synaptics.c/.h`, `trackpoint.c/.h`,
+`x240_pico.c/.h`, `keymaps/default/keymap.c`. Builds; keymap is a placeholder until #38.
 
 ## `hardware/`
 

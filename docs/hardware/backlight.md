@@ -67,8 +67,7 @@ Reference: [QMK backlight docs](https://docs.qmk.fm/features/backlight).
 /* config.h */
 #define BACKLIGHT_PIN     GP26
 #define BACKLIGHT_LEVELS  5
-#define BACKLIGHT_BREATHING
-#define BREATHING_PERIOD  6
+/* no BACKLIGHT_BREATHING — unsupported by the software driver */
 ```
 
 ```make
@@ -77,8 +76,8 @@ BACKLIGHT_ENABLE = yes
 BACKLIGHT_DRIVER = software
 ```
 
-FN + F11 (`CK_BKLT`) steps through the five levels; breathing is toggled with the standard
-`BL_BRTG` keycode if mapped.
+FN + F11 (`CK_BKLT`) steps through the five levels. **No breathing**: `backlight_software.c`
+refuses `BACKLIGHT_BREATHING` at compile time, so it is not defined.
 
 ## Troubleshooting
 

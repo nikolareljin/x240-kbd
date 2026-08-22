@@ -34,16 +34,16 @@ running QMK. No drivers on any OS — it is a plain USB HID composite device.
 | Rev A + reused X240 base cover, no printer | **$110–150** |
 | Rev B PCB | add $25–35 |
 
-The donor keyboard and palmrest are most of it. [Full BOM →](hardware/bom-and-cost.html)
+The donor keyboard and palmrest are most of it. [Full BOM →](hardware/bom-and-cost.md)
 
 ## Start here
 
-1. [Component reference](hardware/components.html) — every part, datasheet, and where to buy it.
-2. [GPIO budget](hardware/gpio-budget.html) — why a Pico needs a shift register for this keyboard.
-3. [TrackPoint](hardware/trackpoint.html) — how the stick reaches the host, and the one measurement that confirms it.
+1. [Component reference](hardware/components.md) — every part, datasheet, and where to buy it.
+2. [GPIO budget](hardware/gpio-budget.md) — why a Pico needs a shift register for this keyboard.
+3. [TrackPoint](hardware/trackpoint.md) — how the stick reaches the host, and the one measurement that confirms it.
 4. [Firmware](firmware/) — what QMK is configured to do, and the two corrections that make it build on RP2040.
 5. [Enclosure](enclosure/) — printed or hand-made.
-6. [References](references.html) — the projects and datasheets this stands on.
+6. [References](references.md) — the projects and datasheets this stands on.
 
 The step-by-step build lives in the repository:
 [`ASSEMBLY.md`](https://github.com/nikolareljin/x240-kbd/blob/main/ASSEMBLY.md), with the

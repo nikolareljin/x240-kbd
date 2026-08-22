@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Shim: ./probe <tool> == ./dev deploy <tool>  — copies a CircuitPython tool to the CIRCUITPY drive.
+# Tools: matrix_probe (default), ps2_sniffer, shift_register_test
+case "${1:-}" in
+  -h|--help|help) exec bash "$(dirname "$0")/scripts/cli.sh" deploy --help ;;
+esac
+exec bash "$(dirname "$0")/scripts/cli.sh" deploy "${1:-matrix_probe}" "${@:2}"

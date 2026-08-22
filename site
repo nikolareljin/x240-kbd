@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Shim: ./site == ./dev build docs — builds the documentation site into out/site.
+exec bash "$(dirname "$0")/scripts/cli.sh" build docs "$@"

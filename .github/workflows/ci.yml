@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  ci:
+    uses: nikolareljin/ci-helpers/.github/workflows/ci.yml@production
+    with:
+      python_version: "3.12"
+      timeout_minutes: 45
+      lint_command: |
+        sudo apt-get update -qq && sudo apt-get install -y -qq shellcheck
+        shellcheck -x dev build test flash probe site scripts/project.sh
+      test_command: |
+        python -m pip install -q pytest
+        ./dev test
+      build_command: |
+        ./dev install
+        ./dev build all

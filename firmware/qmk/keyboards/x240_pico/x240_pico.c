@@ -47,12 +47,10 @@ void matrix_scan_kb(void) {
 }
 
 /* ---------------------------------------------------------------------------
- * Pointing device callback — called after each PS/2 report is assembled.
- * Use this to apply any per-axis inversion or dead-zone filtering.
+ * Pointing device — the ClickPad and TrackPoint are merged inside the custom
+ * driver (synaptics.c / trackpoint.c); nothing to do here but pass through.
+ * Per-axis inversion is SYN_INVERT_Y in config.h, so it is applied once.
  * --------------------------------------------------------------------------- */
 report_mouse_t pointing_device_task_kb(report_mouse_t mouse_report) {
-    /* Uncomment the line below if the Y axis is inverted on your touchpad:
-     * mouse_report.y = -mouse_report.y;
-     */
     return pointing_device_task_user(mouse_report);
 }

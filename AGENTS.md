@@ -27,13 +27,15 @@ standalone USB HID keyboard and pointing device using a Raspberry Pi Pico
 
 - Do not finalize wiring or keymap changes until FPC probing results are captured
   in `hardware/pinout/`.
-- Build firmware by copying `firmware/qmk/keyboards/x240_pico/` into a QMK
-  checkout, then running `qmk compile -kb x240_pico -km default`.
-- Flash with `qmk flash -kb x240_pico -km default` or copy the generated UF2 to
-  the Pico bootloader drive.
-- For CircuitPython probe tools, copy the selected script to the Pico as
-  `code.py` and use a 115200 baud serial terminal. Their pure logic is tested on the
-  host with `cd tools/tests && python3 -m pytest -q`; keep hardware imports guarded.
+- Use `./dev` for everything: `install`, `build [firmware|docs|tools|all]`, `test`,
+  `preflight`, `deploy [firmware|<tool>]`, `devices`, `logs`, `clean`, `update`.
+  `scripts/cli.sh` is the script-helpers template — do not edit it; repo behaviour
+  goes in `scripts/project.sh`. Toolchains run in Docker (`qmkfm/qmk_cli`,
+  `jekyll/jekyll`); `QMK_HOME` points at an existing qmk_firmware checkout.
+- `./dev preflight` must be green before a PR: it is exactly what CI runs
+  (`.github/workflows/ci.yml` → ci-helpers `ci.yml@production`).
+- Probe tools: `./probe <tool>` copies it to `CIRCUITPY` as `code.py`; serial at
+  115200 baud. Keep hardware imports guarded so `tools/tests/` runs on the host.
 - Validate every key, NKRO, FN layer behavior, ClickPad movement/clicks,
   backlight control, power-button long-press behavior, and driverless USB HID
   enumeration before final assembly.
