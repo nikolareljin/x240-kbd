@@ -1,61 +1,57 @@
-# Design Instructions
+---
+title: Design instructions
+nav_exclude: true
+---
 
-Use this file as the design contract for electrical, firmware, mechanical, and
-documentation changes.
+# Design instructions
 
-## Project Goals
+The design contract for electrical, firmware, mechanical and documentation changes.
 
-- Expose the ThinkPad X240 keyboard and ClickPad as a standard USB HID composite
-  device requiring no host drivers.
-- Keep the first build possible on perfboard with 30 AWG wire and off-the-shelf
-  FPC breakouts.
-- Prefer measured pinout data over assumptions. Do not finalize firmware or
-  wiring until Phase 1 probing is complete.
-- Preserve a clear upgrade path for USB-C without requiring firmware changes.
+## Goals
 
-## Electrical Rules
+- Standard USB HID composite device; no host drivers, any OS.
+- First build possible on perfboard with off-the-shelf FPC breakouts; Rev B PCB is a
+  drop-in with the same GPIO map and firmware.
+- Measured data over assumptions: nothing is wired or finalised before Phase 1 probing.
+- Two enclosure routes (printed, hand-made) from one set of dimensions.
+- A USB-C path that needs no firmware change.
 
-- Run the keyboard matrix and ClickPad at 3.3 V logic.
-- Confirm every FPC pin before connecting it to Pico GPIO.
-- Keep GP0-GP7 as matrix row outputs and GP8-GP20 as matrix column inputs unless
-  probing proves the matrix needs a different allocation.
-- Use external 4.7 kOhm pull-ups on PS/2 CLK and DATA.
-- Drive the keyboard backlight through a MOSFET, not directly from a GPIO.
-- Keep the MOSFET gate pull-down so the backlight stays off during boot.
-- Treat the power button as active-low input with a firmware long-press guard.
-- Add external 1N4148 diodes only if testing shows the keyboard matrix lacks
-  internal anti-ghosting diodes.
+## Electrical
 
-## Firmware Rules
+- 3.3 V logic everywhere; confirm every FPC pin before it touches a GPIO.
+- Drive lines on GP0–GP9; sense lines through the 74HC165 chain on GP16/17/18. Put the
+  larger matrix dimension on the chain.
+- Every 74HC165 input has an external pull-up; `CE` grounded; last `DS` grounded; 100 nF
+  per chip.
+- PS/2 DATA = GP21, CLK = GP22 (PIO driver: clock = data + 1), 4.7 kΩ pull-ups. GP19/GP20
+  stay reserved for a second PS/2 pair.
+- Backlight through a MOSFET with a gate pull-down; series resistor set by measurement.
+- Power button is an active-low input with a firmware long-press guard, not a matrix key.
+- 1N4148 diodes only if the three-key test shows the membrane lacks them.
+- The USB-C upgrade uses TP1 = GND, TP2 = D−, TP3 = D+. Never the other way.
 
-- Keep QMK as the primary firmware because it provides RP2040 support, NKRO,
-  PS/2 pointing-device support, Bootmagic, media keys, and TinyUSB HID.
-- Keep `POINTING_DEVICE_DRIVER = ps2` and prefer `PS2_DRIVER = usart` while GP21
-  and GP22 remain available.
-- Keep `BACKLIGHT_DRIVER = timer` unless the RP2040 PWM limitation is confirmed
-  fixed for the QMK version being used.
-- Poll the dedicated GP27 power-button input in keyboard-level firmware rather
-  than representing it as a matrix key.
-- Do not treat the placeholder keymap as verified. Replace it with measured
-  matrix positions after FPC probing.
-- Keep FN+Esc as FN Lock and FN+F11 as keyboard backlight control unless there is
-  a deliberate layout change recorded in `CHANGELOG.md`.
+## Firmware
 
-## Mechanical Rules
+- QMK. `PS2_DRIVER = vendor`, `BACKLIGHT_DRIVER = software`, `CUSTOM_MATRIX = lite`.
+  Changing any of these needs a measured reason recorded in `CHANGELOG.md`.
+- The TrackPoint is decoded from Synaptics pass-through frames. If the identify sequence
+  fails, fall back to relative mode **and log it** — no silent degradation.
+- The placeholder keymap is not verified; regenerate from measured data.
+- FN + Esc = FN Lock, FN + F11 = backlight, unless a layout change is recorded.
 
-- Keep CAD parametric and editable in OpenSCAD.
-- Measure the actual X240 top section with calipers before final STL export.
-- Keep FPC bend radius at or above 5 mm in the final enclosure.
-- Preserve serviceability: the Pico, perfboard, ZIF connectors, and cable strain
-  relief should remain accessible after the bottom case is removed.
-- Export meshes into `cad/exports/`; do not commit generated STL/3MF/AMF files by
-  default.
+## Mechanical
 
-## Documentation Rules
+- One shared `cad/params.scad`; no dimension duplicated across files.
+- The bottom case is printed as two halves; the sled bridges the seam.
+- FPC bend radius ≥ 5 mm; strain relief loads the case, never a connector.
+- Serviceable: deck off, two ZIF tabs, board out. No glue in the printed route.
+- Meshes and DXFs go to `cad/exports/`, not into git.
 
-- Update `README.md` when the user-facing build flow or feature set changes.
-- Update `CHANGELOG.md` for notable project changes.
-- Update `hardware/pinout/*.md` immediately after measured pinout discoveries.
-- Update `hardware/wiring/wiring_diagram.md` whenever GPIO allocation or circuit
-  topology changes.
-- Update these docs when project structure or design rules change.
+## Documentation
+
+- `hardware/wiring/wiring_diagram.md` holds the only GPIO table; other pages link to it.
+- Every part named anywhere appears in `docs/hardware/components.md` with a link.
+- Every cost figure traces to `docs/hardware/bom-and-cost.md`.
+- A correction to a previously published claim goes in `CHANGELOG.md` with its source.
+- Images are illustration unless authored as SVG with source in-tree; captions say which.
+- State lives in GitHub issues, not in documents.

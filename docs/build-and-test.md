@@ -1,89 +1,62 @@
-# Build And Test Workflow
+---
+title: Build and test
+nav_exclude: true
+---
 
-Follow this workflow when taking the project from raw hardware to a verified USB
-keyboard and pointing device.
+# Build and test workflow
 
-## 1. Probe The Keyboard FPC
+From raw hardware to a verified device. Each step maps to a milestone.
 
-1. Flash CircuitPython to a Raspberry Pi Pico.
-2. Wire candidate keyboard FPC breakout pads to available Pico GPIO pins.
-3. Copy `tools/matrix_probe/matrix_probe.py` to the `CIRCUITPY` drive as
-   `code.py`.
-4. Open a serial terminal at 115200 baud.
-5. Press each prompted key and record the reported row/column pair.
-6. Copy the results into `hardware/pinout/x240_keyboard_fpc_pinout.md`.
-7. Identify GND, VCC, backlight, and power-button pins with a multimeter and
-   safe series resistance before final wiring.
+## 1. Probe the keyboard FPC (M2)
 
-## 2. Probe The ClickPad
+CircuitPython on the Pico; `tools/matrix_probe/matrix_probe.py` as `code.py`; two passes
+over the 40 pads; 115200 baud. Record drive/sense pairs per key, matrix size, GND/VCC,
+backlight, power button, and the three-key ghost result in
+`hardware/pinout/x240_keyboard_fpc_pinout.md`.
 
-1. Confirm touchpad VCC and GND pins.
-2. Add 4.7 kOhm pull-ups on candidate PS/2 CLK and DATA lines.
-3. Copy `tools/ps2_sniffer/ps2_sniffer.py` to the `CIRCUITPY` drive as `code.py`.
-4. Edit `CANDIDATE_PAIRS` for the candidate FPC breakout pins.
-5. Move a finger on the touchpad and record the first pair that produces valid
-   PS/2 packets.
-6. Copy the result into `hardware/pinout/x240_clickpad_fpc_pinout.md`.
+## 2. Probe the ClickPad and decide the TrackPoint route (M2)
 
-## 3. Wire The Perfboard
+VCC/GND first; 4.7 kΩ pull-ups on candidate CLK/DATA; `tools/ps2_sniffer/ps2_sniffer.py`
+finds the pair, then in Synaptics mode reports whether `W == 3` pass-through frames appear
+when the stick is pushed. Record in `hardware/pinout/x240_clickpad_fpc_pinout.md`.
 
-Use `hardware/wiring/wiring_diagram.md` as the active wiring reference.
+## 3. Verify the sense chain alone (M3)
 
-- Matrix rows: GP0-GP7.
-- Matrix columns: GP8-GP20.
-- PS/2 CLK/DATA: GP21/GP22 with external pull-ups.
-- Keyboard backlight: GP26 through a MOSFET circuit.
-- Power button: GP27 active-low input.
-- Touchpad LED: GP28 through a current-limiting resistor.
+Build the 74HC165 chain; run `tools/shift_register_test/`; ground each input and watch its
+bit. Only then connect the keyboard FPC.
 
-After wiring, inspect for shorts before connecting USB power.
+## 4. Wire the rest (M3)
 
-## 4. Build Firmware
+Per `hardware/wiring/wiring_diagram.md`. Complete its pre-power checklist before USB.
 
-Install and initialize QMK, then copy this keyboard definition into the QMK tree.
+## 5. Build and flash firmware (M4)
 
 ```bash
-pip install qmk
-qmk setup
+pip install qmk && qmk setup
 cp -r firmware/qmk/keyboards/x240_pico ~/qmk_firmware/keyboards/x240_pico
 qmk compile -kb x240_pico -km default
+qmk flash   -kb x240_pico -km default
 ```
 
-The compiled UF2 should appear in `~/qmk_firmware/.build/`.
+First flash: BOOTSEL → `RPI-RP2` → drag the UF2. Later: `qmk flash`, Bootmagic (top-left
+key), or the `RUN` reset switch + BOOTSEL.
 
-## 5. Flash Firmware
+## 6. Validate USB HID (M4 → M8)
 
-For the first flash, hold BOOTSEL while plugging in the Pico and copy the UF2 to
-the `RPI-RP2` drive. For later flashes, hold the top-left key while plugging in
-if Bootmagic is working.
+- Enumerates with no driver on a fresh OS.
+- Every key; NKRO with 10+ keys.
+- ClickPad move and corner clicks; **stick alone moves the cursor**.
+- `qmk console` shows the Synaptics identify succeeding, not the fallback line.
+- FN media keys, FN Lock, backlight levels (backlit variant), power button ≥ 500 ms.
+- Linux first, then Windows and macOS.
 
-```bash
-qmk flash -kb x240_pico -km default
-```
+## 7. Enclosure (M5 or M6)
 
-## 6. Validate USB HID Behavior
+Printed: measure, `params.scad`, print halves + parts, dry-fit, tolerance report.
+Hand-made: E1 base cover or another variant. Then the assembly order in
+`docs/enclosure/presentation.md`.
 
-- Confirm the device enumerates without custom drivers.
-- Press every key and compare against the intended X240 layout.
-- Verify NKRO with 10 or more simultaneous keys.
-- Verify FN layer media keys and FN+Esc lock behavior.
-- Verify FN+F11 cycles the backlight.
-- Verify ClickPad cursor movement and left/right click behavior.
-- Verify power button only sends the system power event after the configured
-  long press.
-- Test on at least one Linux host before final enclosure assembly. Test Windows
-  and macOS as compatibility targets when available.
+## 8. Acceptance (M8)
 
-## 7. Export And Test-Fit CAD
-
-1. Measure the actual X240 top section with calipers.
-2. Update parameters in `cad/bottom_case.scad`.
-3. Render in OpenSCAD and export meshes to `cad/exports/`.
-4. Print in PETG and dry-fit before final assembly.
-5. Confirm FPC bend radius, USB cutout alignment, screw alignment, and standoff
-   clearance.
-
-## 8. Final Acceptance
-
-The build is ready when every key, the ClickPad, the backlight, FN Lock, the
-power button guard, and USB enumeration work after the case is assembled.
+Every line in the README's verification checklist passes with the case closed, on three
+OSes, and the release carries the tested `.uf2`.

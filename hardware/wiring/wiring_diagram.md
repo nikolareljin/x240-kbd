@@ -1,143 +1,167 @@
-# Wiring Diagram
+# Wiring reference
 
-Complete GPIO-to-FPC wiring reference for the perfboard adapter.
-
----
-
-## GPIO Allocation Table
-
-| Pico GPIO | Pin# | Function              | Direction | Notes                              |
-|-----------|------|-----------------------|-----------|------------------------------------|
-| GP0       | 1    | Matrix Row 0          | Output    | Driven LOW during row scan         |
-| GP1       | 2    | Matrix Row 1          | Output    |                                    |
-| GP2       | 3    | Matrix Row 2          | Output    |                                    |
-| GP3       | 4    | Matrix Row 3          | Output    |                                    |
-| GP4       | 5    | Matrix Row 4          | Output    |                                    |
-| GP5       | 6    | Matrix Row 5          | Output    |                                    |
-| GP6       | 7    | Matrix Row 6          | Output    |                                    |
-| GP7       | 8    | Matrix Row 7          | Output    |                                    |
-| GP8       | 11   | Matrix Col 0          | Input     | Internal pull-up enabled           |
-| GP9       | 12   | Matrix Col 1          | Input     |                                    |
-| GP10      | 14   | Matrix Col 2          | Input     |                                    |
-| GP11      | 15   | Matrix Col 3          | Input     |                                    |
-| GP12      | 16   | Matrix Col 4          | Input     |                                    |
-| GP13      | 17   | Matrix Col 5          | Input     |                                    |
-| GP14      | 19   | Matrix Col 6          | Input     |                                    |
-| GP15      | 20   | Matrix Col 7          | Input     |                                    |
-| GP16      | 21   | Matrix Col 8          | Input     |                                    |
-| GP17      | 22   | Matrix Col 9          | Input     |                                    |
-| GP18      | 24   | Matrix Col 10         | Input     |                                    |
-| GP19      | 25   | Matrix Col 11         | Input     |                                    |
-| GP20      | 26   | Matrix Col 12         | Input     |                                    |
-| GP21      | 27   | PS/2 CLK (UART0)      | Bidir     | 4.7 kΩ pull-up to 3.3 V           |
-| GP22      | 29   | PS/2 DATA (UART0)     | Bidir     | 4.7 kΩ pull-up to 3.3 V           |
-| GP26      | 31   | Backlight PWM         | Output    | To 2N7002 MOSFET gate              |
-| GP27      | 32   | Power button          | Input     | Internal pull-up; active LOW       |
-| GP28      | 34   | Touchpad LED          | Output    | HIGH = LED on, via 100 Ω resistor  |
-| 3V3       | 36   | 3.3 V rail            | Supply    | Powers touchpad + pull-ups         |
-| GND       | 38   | Ground                | Supply    |                                    |
-| VBUS      | 40   | 5 V from USB          | Supply    | Available if backlight needs 5 V   |
-
-*Pico Pin# refers to the physical pin number on the 40-pin header.*
+**This file is the single authoritative copy of the GPIO allocation.** Every other document
+links here. If a page elsewhere disagrees with this table, this table wins and that page has
+a bug.
 
 ---
 
-## ASCII Schematic
+## GPIO allocation
+
+| Pico GPIO | Header pin | Function | Direction | Notes |
+|---|---|---|---|---|
+| GP0 | 1 | Matrix drive D0 | Output | Driven LOW one at a time during scan |
+| GP1 | 2 | Matrix drive D1 | Output | |
+| GP2 | 4 | Matrix drive D2 | Output | |
+| GP3 | 5 | Matrix drive D3 | Output | |
+| GP4 | 6 | Matrix drive D4 | Output | |
+| GP5 | 7 | Matrix drive D5 | Output | |
+| GP6 | 9 | Matrix drive D6 | Output | |
+| GP7 | 10 | Matrix drive D7 | Output | |
+| GP8 | 11 | Matrix drive D8 | Output | |
+| GP9 | 12 | Matrix drive D9 | Output | Ten drive lines; documented ThinkPad matrices need ≤ 9 on one side |
+| GP10–GP15 | 14–20 | **Spare** | — | |
+| GP16 | 21 | Sense chain serial out ← 74HC165 U1 `Q7` | Input | SPI0 RX (MISO) |
+| GP17 | 22 | Sense chain `PL` | Output | Parallel load, active LOW; plain GPIO |
+| GP18 | 24 | Sense chain `CP` | Output | SPI0 SCK |
+| GP19 | 25 | **Reserved** — PS/2 #2 DATA | — | Only if probing shows a standalone TrackPoint |
+| GP20 | 26 | **Reserved** — PS/2 #2 CLK | — | Pair with GP19 (clock = data + 1) |
+| GP21 | 27 | PS/2 **DATA** — ClickPad (+ TrackPoint pass-through) | Bidir | 4.7 kΩ pull-up to 3V3 |
+| GP22 | 29 | PS/2 **CLK** — ClickPad | Bidir | 4.7 kΩ pull-up to 3V3. PIO driver rule: CLK = DATA + 1 |
+| GP26 | 31 | Backlight MOSFET gate | Output | `software` PWM; 10 kΩ series, 100 kΩ pull-down |
+| GP27 | 32 | Power button | Input | Internal pull-up; active LOW; 500 ms guard in firmware |
+| GP28 | 34 | Touchpad LED | Output | HIGH = on, via 100 Ω |
+| 3V3 | 36 | 3.3 V rail | Supply | 74HC165 × 3, SIP pull-ups, PS/2 pull-ups, ClickPad |
+| GND | 3, 8, 13, 18, 23, 28, 33, 38 | Ground | Supply | |
+| VBUS | 40 | 5 V from USB | Supply | Optional backlight anode supply |
+| RUN | 30 | Reset | Input | Tactile switch to GND, reachable through the case |
+
+*Header pin = physical pin on the Pico's 40-pin header.*
+
+Pico underside test pads — used only by the USB-C upgrade:
+
+| Pad | Signal |
+|---|---|
+| TP1 | GND |
+| TP2 | USB D− |
+| TP3 | USB D+ |
+
+---
+
+## Schematics
+
+### Matrix and 74HC165 sense chain
 
 ```
-                         RASPBERRY PI PICO
-                    ┌────────────────────────┐
-            GP0 ───│1                      40│─── VBUS (5V USB)
-            GP1 ───│2                      39│─── VSYS
-            GP2 ───│3  Row 0-7             38│─── GND ──────────────── GND rail
-            GP3 ───│4  (driven LOW         37│─── 3V3_EN
-            GP4 ───│5  during scan)        36│─── 3V3 ──┬─── Touchpad VCC
-            GP5 ───│6                      35│─── ADC_VRef   │
-            GP6 ───│7                      34│─── GP28 ──┤── 100Ω ── LED(+)
-            GP7 ───│8                      33│─── GND        │              LED(-)─── GND
-                   │9  GND                 32│─── GP27 ──── Power button FPC pin
-                   │10 GND                 31│─── GP26 ──── 10kΩ ──┬── MOSFET Gate
-            GP8 ───│11 Col 0               30│─── RUN              │
-            GP9 ───│12 Col 1               29│─── GP22 ──── 4.7kΩ ─┤─── PS/2 DATA
-                   │13 GND                 28│─── GND              │
-           GP10 ───│14 Col 2               27│─── GP21 ──── 4.7kΩ ─┘─── PS/2 CLK
-           GP11 ───│15 Col 3               26│─── GP16         │
-           GP12 ───│16 Col 4               25│─── GP19    [4.7kΩ pull-ups connect
-           GP13 ───│17 Col 5               24│─── GP18     to 3V3 rail]
-                   │18 GND                 23│─── GND
-           GP14 ───│19 Col 6               22│─── GP17
-           GP15 ───│20 Col 7               21│─── GP16
-                   └────────────────────────┘
-
-   MOSFET Backlight Circuit (2N7002 SOT-23):
-   ───────────────────────────────────────────
-   GP26 ─── 10 kΩ ─── Gate
-                       Drain ─── LED strip cathode (–)
-                       Source ── GND
-   Gate ─── 100 kΩ ─── GND    (pull-down; prevents false trigger at boot)
-   3V3  ─── 100 Ω  ─── LED strip anode (+)
-
-   PS/2 Touchpad:
-   ──────────────
-   3V3 ────────────── Touchpad VCC
-   GND ────────────── Touchpad GND
-   GP21 ─┬─ 4.7kΩ ─ 3V3
-         └─────────── Touchpad CLK
-   GP22 ─┬─ 4.7kΩ ─ 3V3
-         └─────────── Touchpad DATA
-
-   Power Button:
-   ─────────────
-   GP27 ──────────── Power button FPC pin  (other side of button → GND)
-   (Pico internal pull-up keeps GP27 HIGH; button pulls it LOW when pressed)
-
-   Touchpad LED:
-   ─────────────
-   GP28 ─── 100 Ω ─── LED anode (+)
-                       LED cathode (–) ─── GND
+ Keyboard FPC (40-pin, via ZIF breakout) — pin numbers filled after probing
+ ┌──────────────────────────────────────────────────────────────────────────┐
+ │ drive lines ────────────────────────────────► GP0 … GP9 (one per line)    │
+ │ sense lines S0…S23 ──┐                                                    │
+ └──────────────────────┼───────────────────────────────────────────────────┘
+                        │          3V3
+                        │           │
+                        │      [RN1][RN2][RN3]  10 kΩ × 8 bussed SIP, one per chip
+                        │           │
+          ┌─────────────┴───────────┴──────────┐
+          │  U1 74HC165      U2 74HC165      U3 74HC165                       │
+          │  D0-D7 ← S0-S7   D0-D7 ← S8-S15  D0-D7 ← S16-S23                 │
+          │  PL ◄────────────┬───────────────┬────────────────── GP17 (PL)   │
+          │  CP ◄────────────┬───────────────┬────────────────── GP18 (SCK)  │
+          │  Q7 ──► GP16     Q7 ──► U1.DS    Q7 ──► U2.DS     U3.DS ── GND   │
+          │  CE ── GND       CE ── GND       CE ── GND                        │
+          │  VCC 3V3 + 100 nF each                                            │
+          └──────────────────────────────────────────────────────────────────┘
 ```
 
-### USB-C Breakout Wiring
+Read sequence, bit order and failure modes:
+[`docs/hardware/shift-register-matrix.md`](../../docs/hardware/shift-register-matrix.md).
 
-For the optional USB-C upgrade, the breakout board is wired directly to the Pico's test pads on the underside of the board, as well as the VBUS and GND pins:
+### PS/2 — ClickPad (carries the TrackPoint)
 
-![USB-C Breakout Wiring to Raspberry Pi Pico](../../docs/images/usb_c_wiring.png)
+```
+ 3V3 ─────────────── ClickPad VCC
+ GND ─────────────── ClickPad GND
+ GP21 ─┬─ 4.7 kΩ ─ 3V3
+       └──────────── ClickPad DATA
+ GP22 ─┬─ 4.7 kΩ ─ 3V3
+       └──────────── ClickPad CLK
+ GP28 ── 100 Ω ───── LED anode   (LED cathode ── GND; or the ClickPad FPC's own LED pins)
+```
+
+The TrackPoint's PS/2 stream rides inside the ClickPad's packets (Synaptics pass-through).
+No extra wires. If probing disproves that on your unit, the TrackPoint's own CLK/DATA go to
+GP20/GP19 with the same pull-ups — see
+[`docs/hardware/trackpoint.md`](../../docs/hardware/trackpoint.md).
+
+### Backlight (backlit keyboard variants only)
+
+```
+ 3V3 (or VBUS) ── R_series ── LED strip (+)
+                              LED strip (−) ── Drain  Q1 2N7002 / BS170
+                                               Source ── GND
+ GP26 ── 10 kΩ ── Gate
+                  Gate ── 100 kΩ ── GND        (off during boot)
+```
+
+R_series is set by measurement: [`docs/hardware/backlight.md`](../../docs/hardware/backlight.md).
+
+### Power button
+
+```
+ GP27 ──────────── power-button FPC pin     (other side of the switch → GND)
+ Pico internal pull-up keeps GP27 HIGH; pressed = LOW; firmware requires ≥ 500 ms hold
+```
+
+### Reset
+
+```
+ RUN (pin 30) ── tactile switch ── GND
+```
+
+### USB-C breakout (optional)
+
+```
+ Pico TP1 (GND) ──── breakout GND
+ Pico TP2 (D−)  ──── breakout D−
+ Pico TP3 (D+)  ──── breakout D+
+ Pico VBUS      ──── breakout VBUS       breakout must have 5.1 kΩ on CC1 and CC2
+```
+
+![USB-C breakout illustration](../../docs/images/usb_c_wiring.png)
+
+*Decorative. The labels in the image predate the TP1/TP2/TP3 correction; the text above is
+the reference.*
+
+### FPC to ZIF breakout
+
+![FPC ribbon cable and ZIF breakout](../../docs/images/fpc_zif_wiring.png)
+
+*Illustrative. Check your breakout's contact side (top vs bottom) against the cable.*
 
 ---
 
-## Keyboard FPC to Breakout to Pico
+## Keyboard FPC → breakout → Pico / chain
 
-To connect the keyboard's 40-pin FPC ribbon cable, insert it into a 0.5 mm pitch ZIF breakout board as shown below:
+Fill after probing (`hardware/pinout/x240_keyboard_fpc_pinout.md` is the master copy).
 
-![FPC Ribbon Cable and ZIF Breakout Board Connection](../../docs/images/fpc_zif_wiring.png)
+| Signal | FPC pin | Breakout pad | Destination |
+|---|---|---|---|
+| Drive D0 … D9 | | | GP0 … GP9 |
+| Sense S0 … S7 | | | U1 D0 … D7 |
+| Sense S8 … S15 | | | U2 D0 … D7 |
+| Sense S16 … S23 | | | U3 D0 … D7 |
+| GND | | | GND |
+| VCC | | | 3V3 |
+| Backlight + / − | | | R_series / Q1 drain |
+| Power button | | | GP27 |
+| TrackPoint CLK / DATA (only if standalone) | | | GP20 / GP19 |
 
-After completing Phase 1 probing, fill the table below with the actual FPC pin
-numbers that correspond to each matrix row/column:
+## Rev A pre-power checklist
 
-| Signal  | FPC Pin | Breakout Pad | Pico GPIO |
-|---------|---------|--------------|-----------|
-| Row 0   |         |              | GP0       |
-| Row 1   |         |              | GP1       |
-| Row 2   |         |              | GP2       |
-| Row 3   |         |              | GP3       |
-| Row 4   |         |              | GP4       |
-| Row 5   |         |              | GP5       |
-| Row 6   |         |              | GP6       |
-| Row 7   |         |              | GP7       |
-| Col 0   |         |              | GP8       |
-| Col 1   |         |              | GP9       |
-| Col 2   |         |              | GP10      |
-| Col 3   |         |              | GP11      |
-| Col 4   |         |              | GP12      |
-| Col 5   |         |              | GP13      |
-| Col 6   |         |              | GP14      |
-| Col 7   |         |              | GP15      |
-| Col 8   |         |              | GP16      |
-| Col 9   |         |              | GP17      |
-| Col 10  |         |              | GP18      |
-| Col 11  |         |              | GP19      |
-| Col 12  |         |              | GP20      |
-| GND     |         |              | GND       |
-| VCC     |         |              | 3V3       |
-| BL+     |         |              | MOSFET D  |
-| PWR BTN |         |              | GP27      |
+- [ ] Every FPC pad has continuity to exactly one destination
+- [ ] No continuity between adjacent FPC pads (0.5 mm pitch — check every pair)
+- [ ] 3V3 to GND: no short
+- [ ] Each 74HC165: `CE` to GND, `VCC` to 3V3, 100 nF present
+- [ ] SIP network common pin on 3V3
+- [ ] PS/2 pull-ups present; DATA on GP21, CLK on GP22
+- [ ] MOSFET pinout verified against *its* datasheet (TO-92 pinouts differ by maker)

@@ -10,12 +10,16 @@ standalone USB HID keyboard and pointing device using a Raspberry Pi Pico
   default keymap, and build flags.
 - `hardware/pinout/`: FPC probing workflow and measured keyboard/touchpad pinout
   tables. Treat measured pinout data as the hardware source of truth.
-- `hardware/wiring/`: active GPIO allocation and perfboard wiring reference.
+- `hardware/wiring/wiring_diagram.md`: **the single authoritative GPIO table** and
+  schematics. Other documents link to it; never restate the table elsewhere.
+- `hardware/pcb/`: Rev B KiCad project (milestone M7).
 - `tools/matrix_probe/`: CircuitPython tool for keyboard matrix discovery.
 - `tools/ps2_sniffer/`: CircuitPython tool for ClickPad PS/2 CLK/DATA discovery.
 - `cad/`: OpenSCAD sources for the bottom case, Pico mount, and FPC cable guide.
-- `docs/`: durable maintainer documentation for project structure, design rules,
-  code rules, and build/test workflow.
+- `docs/`: the documentation site (GitHub Pages from `/docs`): `hardware/`,
+  `firmware/`, `enclosure/`, `references.md`, `glossary.md`, plus maintainer pages
+  marked `nav_exclude: true`. Every part named anywhere must appear in
+  `docs/hardware/components.md`; every cost in `docs/hardware/bom-and-cost.md`.
 - `ASSEMBLY.md`, `BOM.md`, `PLAN.md`: builder-facing assembly, parts, and project
   planning references.
 
@@ -55,4 +59,6 @@ standalone USB HID keyboard and pointing device using a Raspberry Pi Pico
   `cad/exports/` when needed locally.
 - Never commit secrets, local environment files, tokens, private keys, or
   hardware capture logs.
-- Update `CHANGELOG.md` for notable user-facing or project-structure changes.
+- Update `CHANGELOG.md` for notable user-facing or project-structure changes, and for
+  every correction of a previously published claim, with its source.
+- Work state lives in GitHub issues (milestones M0–M8), not in documents.

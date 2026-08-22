@@ -1,66 +1,58 @@
-# Project Structure
+---
+title: Project structure
+nav_exclude: true
+---
 
-`x240-kbd` converts a ThinkPad X240 keyboard assembly and ClickPad into a
+# Project structure
+
+`x240-kbd` converts a ThinkPad X240 keyboard assembly (with TrackPoint) and ClickPad into a
 standalone USB HID device driven by a Raspberry Pi Pico running QMK.
 
-## Top-Level Files
+## Top level
 
 | Path | Purpose |
 |---|---|
-| `README.md` | Builder entry point, feature summary, quick start, and links. |
-| `CHANGELOG.md` | Notable changes by release or unreleased work. |
-| `PLAN.md` | Original project plan, assumptions, and phase breakdown. |
-| `ASSEMBLY.md` | Step-by-step build instructions. |
-| `BOM.md` | Parts list, approximate cost, and required tools. |
-| `LICENSE` | Project license. |
-| `.gitignore` | Generated, local-only, and build artifact exclusions. |
+| `README.md` | Builder entry point, status, features, honest cost, quick start |
+| `PLAN.md` | The living plan: corrected design and the milestone sequence |
+| `ASSEMBLY.md` | Step-by-step Rev A build |
+| `BOM.md` | Pointer to the priced BOM in `docs/hardware/bom-and-cost.md` |
+| `CHANGELOG.md` | Notable changes, including every design correction with its reason |
+| `AGENTS.md` | Repository guidelines for agents and contributors |
+| `LICENSE` | GPL-2.0 |
 
-## Firmware
+## `firmware/qmk/keyboards/x240_pico/`
 
-`firmware/qmk/keyboards/x240_pico/` is a QMK keyboard definition that is copied
-into a QMK checkout when building.
+Copied into a QMK checkout to build. `keyboard.json` (USB IDs, `ps2` block, layout
+metadata), `config.h` (pins, timing, tuning), `rules.mk` (features, drivers, extra sources),
+`x240_pico.c/.h` (keyboard-level hooks, LAYOUT), `keymaps/default/keymap.c`. Milestone M4
+adds `matrix.c`, `synaptics.c/.h`, `trackpoint.c/.h`. Until then the definition does not
+build — see `docs/firmware/architecture.md`.
 
-| Path | Purpose |
-|---|---|
-| `keyboard.json` | USB metadata, RP2040 platform, matrix pins, diode direction, and layout metadata. |
-| `config.h` | Debounce, PS/2 pins, backlight, power button, NKRO, and Bootmagic settings. |
-| `rules.mk` | QMK feature flags and RP2040 build configuration. |
-| `x240_pico.c` | Keyboard-level hooks and hardware initialization point. |
-| `x240_pico.h` | Layout macro and shared declarations. |
-| `keymaps/default/keymap.c` | Base and FN layers plus custom keycode behavior. |
+## `hardware/`
 
-The current firmware assumes an 8 row by 13 column matrix. Treat that as a
-working assumption until Phase 1 probing confirms the actual FPC mapping.
+- `pinout/` — probing procedure and the measured pinout tables. **Hardware source of truth.**
+- `wiring/wiring_diagram.md` — **the single authoritative GPIO table** plus schematics.
+- `pcb/` — Rev B KiCad project (milestone M7).
 
-## Hardware
+## `tools/`
 
-`hardware/pinout/` contains the measurement workflow and the tables that must be
-filled from real probing results before final wiring.
+CircuitPython scripts run on the Pico as `code.py`: `matrix_probe/`, `ps2_sniffer/`, and
+(M2) `shift_register_test/`. Standalone; no host-side dependencies.
 
-`hardware/wiring/` contains the active GPIO allocation and perfboard circuit
-guidance. Update it whenever GPIO assignments, pull-ups, MOSFET circuits, or LED
-drive behavior changes.
+## `cad/`
 
-## Tools
+OpenSCAD sources: `params.scad` (shared measured dimensions, M5), the split `bottom_case`,
+`pico_mount_bracket`, `fpc_cable_guide`, `perfboard_sled`, `usb_strain_relief`,
+`tilt_feet`, `zif_support_block`, `led_light_pipe`, `export_plates` (DXF for laser cutting,
+M6). Meshes go to `cad/exports/` and are not committed.
 
-`tools/matrix_probe/matrix_probe.py` is a CircuitPython probe for discovering
-keyboard matrix row and column pairs on the 40-pin keyboard FPC.
+## `docs/`
 
-`tools/ps2_sniffer/ps2_sniffer.py` is a CircuitPython PS/2 monitor for testing
-candidate ClickPad CLK/DATA pin pairs.
+The documentation site source. `hardware/`, `firmware/`, `enclosure/` each have an
+`index.md` parent page; `references.md`, `glossary.md`; `images/`. Maintainer pages
+(`project-structure`, `design-instructions`, `code-instructions`, `build-and-test`) carry
+`nav_exclude: true` and are excluded from the site.
 
-Both tools are meant to be copied to a CircuitPython Pico as `code.py`. Keep them
-standalone and avoid dependencies outside the CircuitPython standard modules they
-already import.
-
-## CAD
-
-`cad/` stores OpenSCAD source for the bottom case, Pico mounting bracket, and FPC
-cable guide. Generated mesh exports belong under `cad/exports/` and are ignored
-because they should be regenerated from `.scad` source.
-
-## Documentation
-
-`docs/` stores project-maintenance guidance. It should not duplicate every detail
-from `ASSEMBLY.md`; instead, it should explain where information lives, what
-rules to follow, and how to safely change the design.
+Where new work goes: a measured fact → `hardware/pinout/`; a wiring change →
+`hardware/wiring/` first, then the docs that cite it; a design decision → the relevant
+`docs/` page plus `CHANGELOG.md`; anything with a state → a GitHub issue, not a doc.
