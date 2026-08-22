@@ -12,6 +12,8 @@ click from the ClickPad's button zones.
 
 ## How the X240 routes the TrackPoint
 
+![PS/2 bus with TrackPoint pass-through](../images/ps2_bus.svg)
+
 In this generation of ThinkPads the TrackPoint does **not** have its own line to the host.
 The stick's strain-gauge board feeds a controller (TPM754-class) that speaks PS/2, and that
 PS/2 stream goes into the **Synaptics ClickPad's guest port**. The ClickPad forwards the

@@ -1,0 +1,66 @@
+# GitHub Pages site for x240-kbd — served from /docs on main.
+# Theme: just-the-docs via remote_theme (no vendored theme files).
+title: x240-kbd
+description: A ThinkPad X240 keyboard, ClickPad and TrackPoint as a driverless USB device on a Raspberry Pi Pico running QMK.
+url: https://nikolareljin.github.io
+baseurl: /x240-kbd
+
+remote_theme: just-the-docs/just-the-docs
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: false
+
+# remote_theme does not merge the theme's own config, so the layout must be set here.
+defaults:
+  - scope:
+      path: ""
+    values:
+      layout: default
+
+color_scheme: light
+search_enabled: true
+search:
+  heading_level: 2
+  previews: 3
+  tokenizer_separator: /[\s/]+/
+heading_anchors: true
+back_to_top: true
+back_to_top_text: Back to top
+
+aux_links:
+  Repository: https://github.com/nikolareljin/x240-kbd
+  Issues: https://github.com/nikolareljin/x240-kbd/issues
+aux_links_new_tab: true
+
+nav_external_links:
+  - title: Assembly guide (repo)
+    url: https://github.com/nikolareljin/x240-kbd/blob/main/ASSEMBLY.md
+  - title: Wiring reference (repo)
+    url: https://github.com/nikolareljin/x240-kbd/blob/main/hardware/wiring/wiring_diagram.md
+
+footer_content: 'GPL-2.0. Design status: not yet built — pinout and TrackPoint route are confirmed by probing (milestone M2).'
+
+# Maintainer-only pages stay in the repo but off the site.
+exclude:
+  - README.md
+  - project-structure.md
+  - design-instructions.md
+  - code-instructions.md
+  - build-and-test.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor/
+  - .jekyll-cache/
+
+callouts:
+  warning:
+    title: Unverified
+    color: yellow
+  note:
+    title: Note
+    color: blue

@@ -58,3 +58,9 @@ desktop.ini
 .idea/
 *.swp
 *~
+
+# Jekyll local preview (docs/)
+docs/Gemfile.lock
+docs/_site/
+docs/.jekyll-cache/
+docs/.sass-cache/

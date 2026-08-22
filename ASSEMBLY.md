@@ -35,7 +35,11 @@ Summary:
 6. **Record** everything in `hardware/pinout/x240_keyboard_fpc_pinout.md` and
    `hardware/pinout/x240_clickpad_fpc_pinout.md`.
 
+![FPC orientation and pin 1](docs/images/fpc_orientation.svg)
+
 ![FPC ribbon cable and ZIF breakout](docs/images/fpc_zif_wiring.png)
+
+*Photo-style illustration only; the drawing is the reference.*
 
 ---
 

@@ -22,6 +22,8 @@ and are corrected there.
 | `x240_pico.h` | `LAYOUT` macro, custom keycodes `CK_BKLT`/`CK_FNLK`, layer enum | exists; `LAYOUT` regenerated from the measured matrix |
 | `keymaps/default/keymap.c` | `_BASE` and `_FN` layers, `process_record_user` | exists; regenerated from the measured matrix |
 
+![Signal flow](../images/signal_flow.svg)
+
 ## From a key press to a USB report
 
 ```

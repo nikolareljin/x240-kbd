@@ -1,0 +1,9 @@
+# Local preview only:  cd docs && bundle install && bundle exec jekyll serve
+# GitHub Pages ignores this file and uses its own github-pages gem set.
+source "https://rubygems.org"
+gem "jekyll", "~> 4.3"
+gem "just-the-docs", "~> 0.10"
+gem "jekyll-remote-theme"
+gem "jekyll-seo-tag"
+gem "jekyll-relative-links"
+gem "webrick"

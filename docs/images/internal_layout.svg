@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 540" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="12">
+  <title>Internal layout of the enclosure, plan view, and the vertical stack</title>
+  <rect width="980" height="540" fill="#ffffff"/>
+  <text x="20" y="26" font-size="16" font-weight="bold" fill="#111">Internal layout — plan view (309 × 210 mm deck outline) and stack</text>
+  <g transform="translate(30,70)">
+    <rect width="494" height="336" rx="5" fill="#f5f5f5" stroke="#111" stroke-width="2"/>
+    <line x1="247" y1="0" x2="247" y2="336" stroke="#9e9e9e" stroke-dasharray="6 4"/>
+    <g fill="#fff" stroke="#111" stroke-width="1.5">
+      <circle cx="13" cy="13" r="5"/><circle cx="96" cy="13" r="5"/><circle cx="400" cy="13" r="5"/><circle cx="481" cy="13" r="5"/>
+      <circle cx="13" cy="323" r="5"/><circle cx="240" cy="323" r="5"/><circle cx="481" cy="323" r="5"/>
+    </g>
+    <rect x="233" y="-8" width="28" height="8" fill="#fff" stroke="#111"/>
+    <text x="268" y="-10" fill="#111" font-size="11">USB cutout + strain relief (rear wall)</text>
+    <rect x="167" y="30" width="160" height="128" fill="#c5e1a5" stroke="#33691e" stroke-width="1.5"/>
+    <text x="247" y="46" text-anchor="middle" fill="#1b5e20" font-weight="bold">board 100 × 80</text>
+    <rect x="206" y="54" width="82" height="34" fill="#1b5e20"/><text x="247" y="75" text-anchor="middle" fill="#fff" font-size="11">Pico · USB → rear</text>
+    <rect x="175" y="132" width="90" height="16" fill="#37474f"/><text x="220" y="144" text-anchor="middle" fill="#fff" font-size="10">ZIF 40 (keyboard)</text>
+    <rect x="275" y="132" width="44" height="16" fill="#37474f"/><text x="297" y="144" text-anchor="middle" fill="#fff" font-size="10">ZIF tp</text>
+    <path d="M247 300 C247 250 200 230 200 190 C200 165 215 152 220 148" fill="none" stroke="#c8a165" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="247" cy="300" r="6" fill="#c8a165" stroke="#8d6e3e"/>
+    <text x="262" y="292" fill="#8d6e3e" font-size="11">keyboard FPC exits the deck here</text>
+    <path d="M300 230 C300 200 297 165 297 150" fill="none" stroke="#90a4ae" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="300" cy="230" r="5" fill="#90a4ae"/><text x="310" y="234" fill="#607d8b" font-size="11">ClickPad FPC</text>
+    <g fill="#fff3e0" stroke="#ef6c00"><rect x="190" y="200" width="20" height="10"/><rect x="190" y="240" width="20" height="10"/></g>
+    <text x="60" y="228" fill="#e65100" font-size="11">cable guides, ≥ 5 mm radius</text>
+    <circle cx="380" cy="200" r="6" fill="#ffeb3b" stroke="#f9a825"/><text x="390" y="204" fill="#f9a825" font-size="11">LED light pipe</text>
+    <g fill="#e0e0e0" stroke="#9e9e9e"><circle cx="40" cy="300" r="8"/><circle cx="454" cy="300" r="8"/></g>
+    <text x="55" y="320" fill="#757575" font-size="11">rubber feet (front)</text>
+    <text x="255" y="20" fill="#9e9e9e" font-size="11">split seam</text>
+    <text x="24" y="352" fill="#555" font-size="11">○ X240 bosses — positions measured (issue #44) · front edge ↓ palmrest · rear edge ↑ USB, tilt feet</text>
+  </g>
+  <g transform="translate(590,80)">
+    <text x="0" y="0" font-weight="bold" fill="#111">Vertical stack (mm)</text>
+    <g stroke="#111" stroke-width="1">
+      <rect x="0" y="20" width="340" height="20" fill="#bdbdbd"/><text x="8" y="34">deck underside — ribs, backplate</text>
+      <rect x="0" y="40" width="340" height="16" fill="#fff"/><text x="8" y="52">clearance ≥ 2.0</text>
+      <rect x="0" y="56" width="340" height="40" fill="#c5e1a5"/><text x="8" y="72">Pico on 2×20 headers ≈ 8.5 (tallest)</text><text x="8" y="90" fill="#555">ZIF body ≈ 5.0</text>
+      <rect x="0" y="96" width="340" height="14" fill="#8d6e63"/><text x="8" y="107" fill="#fff">board 1.6</text>
+      <rect x="0" y="110" width="340" height="36" fill="#fff"/><text x="8" y="132">standoff 6.0</text>
+      <rect x="0" y="146" width="340" height="18" fill="#9e9e9e"/><text x="8" y="159" fill="#fff">case floor 2.5 (E1 cover ≈ 1.2)</text>
+    </g>
+    <text x="0" y="190" fill="#111">internal height ≈ 18  (internal_h = 18.0)</text>
+    <text x="0" y="208" fill="#555" font-size="11">Solder the Pico flat (Rev B) to drop ~4 mm.</text>
+    <text x="0" y="250" font-weight="bold" fill="#111">Rules</text>
+    <g fill="#555" font-size="11">
+      <text x="0" y="270">• Board rear-centre: USB straight out, FFC one S-curve</text>
+      <text x="0" y="288">• Sled screwed across the seam = case stiffness</text>
+      <text x="0" y="306">• Strain relief on the cable, never the connector</text>
+      <text x="0" y="324">• RUN reset switch through a 3 mm floor hole</text>
+    </g>
+  </g>
+</svg>

@@ -26,6 +26,8 @@ directly to the Rev B board (drops ~4 mm).
 
 ## Plan view
 
+![Internal layout and stack](../images/internal_layout.svg)
+
 ```
             309 mm
  ┌──────────────────────────────────────────────┐  ← rear edge: USB exit, tilt feet

@@ -18,7 +18,7 @@ chiclet-era ThinkPad keyboard — the 04Y0819 reverse-engineered in
 **17 × 9 matrix = 26 lines for the matrix alone**, before PS/2, backlight, power button or
 LED. The same author rejected the Pico for exactly this reason.
 
-Until [probing](../../hardware/pinout/probing_procedure.md) measures the X240's matrix, the
+Until [probing](https://github.com/nikolareljin/x240-kbd/blob/main/hardware/pinout/probing_procedure.md) measures the X240's matrix, the
 design has to assume the worst documented case.
 
 ## Demand
@@ -59,7 +59,7 @@ design has to assume the worst documented case.
 | GP10–GP15, GP19, GP20 | **Spare (8)** | GP19/GP20 reserved as a second PS/2 pair (DATA = 19, CLK = 20) |
 
 The authoritative copy of this table lives in
-[`../../hardware/wiring/wiring_diagram.md`](../../hardware/wiring/wiring_diagram.md).
+[`../../hardware/wiring/wiring_diagram.md`](https://github.com/nikolareljin/x240-kbd/blob/main/hardware/wiring/wiring_diagram.md).
 If the two ever disagree, the wiring diagram wins and this page is wrong.
 
 If probing finds the matrix is transposed (many sense lines, few drive lines), swap roles:

@@ -11,7 +11,7 @@ document that specifies it and at least one place to buy it. If a part is mentio
 another file and missing here, that is a bug in this file.
 
 Prices are in [`bom-and-cost.md`](bom-and-cost.md). Wiring is in
-[`../../hardware/wiring/wiring_diagram.md`](../../hardware/wiring/wiring_diagram.md).
+[`../../hardware/wiring/wiring_diagram.md`](https://github.com/nikolareljin/x240-kbd/blob/main/hardware/wiring/wiring_diagram.md).
 
 ---
 
@@ -28,6 +28,8 @@ Prices are in [`bom-and-cost.md`](bom-and-cost.md). Wiring is in
 | Buy | [raspberrypi.com](https://www.raspberrypi.com/products/raspberry-pi-pico/) · Adafruit · Pimoroni · DigiKey |
 | Why | Cheapest board with a PIO block, which is what makes a hardware PS/2 host possible in QMK on this family; QMK's RP2040 platform support is mature. |
 
+![USB-C breakout to Pico test pads](../images/usb_c_wiring.svg)
+
 **USB test pads on the underside** — used by the optional USB-C upgrade:
 
 | Pad | Signal |
@@ -40,7 +42,7 @@ Prices are in [`bom-and-cost.md`](bom-and-cost.md). Wiring is in
 | TP6 | BOOTSEL |
 
 Earlier revisions of this repo said TP1 = D− and TP2 = D+. That is wrong and would short
-ground onto D−; see [CHANGELOG](../../CHANGELOG.md).
+ground onto D−; see [CHANGELOG](https://github.com/nikolareljin/x240-kbd/blob/main/CHANGELOG.md).
 
 **Pico 2 (RP2350)** is pin-compatible and $1 more. Before substituting it, confirm QMK's
 RP2350 support for the PS/2 PIO driver in the QMK version you are building with.
@@ -114,7 +116,7 @@ device's `DS` to a defined level. Details in [`shift-register-matrix.md`](shift-
 
 The X240 keyboard (FRU 0C44020) terminates in a 40-conductor 0.5 mm pitch FPC. Which of the
 40 lines are matrix, power, backlight and power-button is **not documented by Lenovo** and is
-established by probing — see [`../../hardware/pinout/probing_procedure.md`](../../hardware/pinout/probing_procedure.md).
+established by probing — see [`../../hardware/pinout/probing_procedure.md`](https://github.com/nikolareljin/x240-kbd/blob/main/hardware/pinout/probing_procedure.md).
 
 ### 40-pin 0.5 mm FPC → DIP breakout **with ZIF connector** (Rev A)
 

@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 320" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13">
+  <title>PS/2 bus between the Pico and the ClickPad, carrying the TrackPoint via pass-through</title>
+  <rect width="760" height="320" fill="#ffffff"/>
+  <text x="20" y="28" font-size="16" font-weight="bold" fill="#111">PS/2 bus — ClickPad with TrackPoint pass-through</text>
+  <rect x="30" y="70" width="150" height="150" rx="6" fill="#1b5e20"/>
+  <text x="105" y="94" text-anchor="middle" fill="#fff" font-weight="bold">Pico (PIO0)</text>
+  <g fill="#fff"><text x="40" y="130">GP21 DATA</text><text x="40" y="170">GP22 CLK</text><text x="40" y="205">3V3 / GND</text></g>
+  <rect x="440" y="70" width="180" height="150" rx="6" fill="#37474f"/>
+  <text x="530" y="94" text-anchor="middle" fill="#fff" font-weight="bold">Synaptics ClickPad</text>
+  <g fill="#fff"><text x="450" y="130">DATA</text><text x="450" y="170">CLK</text><text x="450" y="205">VCC / GND</text></g>
+  <rect x="640" y="110" width="100" height="70" rx="6" fill="#6d4c41"/>
+  <text x="690" y="135" text-anchor="middle" fill="#fff" font-size="12">TrackPoint</text><text x="690" y="152" text-anchor="middle" fill="#fff" font-size="11">controller</text><text x="690" y="168" text-anchor="middle" fill="#ffe0b2" font-size="10">PS/2 guest</text>
+  <g fill="none" stroke-width="2.5"><path d="M180 126 H440" stroke="#1565c0"/><path d="M180 166 H440" stroke="#c62828"/><path d="M620 145 H640" stroke="#6d4c41" stroke-dasharray="4 3"/></g>
+  <g fill="none" stroke="#111" stroke-width="1.5"><path d="M300 126 V114 M300 86 V78 M292 78 H308"/><path d="M300 166 V160 M300 134 V130 M292 130 H308"/></g>
+  <g fill="#fff" stroke="#111" stroke-width="1.5"><rect x="292" y="86" width="16" height="28"/><rect x="292" y="134" width="16" height="26"/></g>
+  <text x="315" y="100" fill="#111">4.7 kΩ → 3V3</text><text x="315" y="150" fill="#111">4.7 kΩ → 3V3</text>
+  <text x="190" y="116" fill="#1565c0">DATA = GP21</text>
+  <text x="190" y="198" fill="#c62828">CLK = GP22</text><text x="190" y="214" fill="#c62828" font-size="11">PIO rule: clock = data + 1</text>
+  <text x="20" y="262" fill="#555" font-size="12">Absolute mode + pass-through: 6-byte packets; W == 3 marks a guest (TrackPoint) frame.</text>
+  <text x="20" y="280" fill="#555" font-size="12">One bus, no extra pins. Fallback if probing finds no guest frames:</text>
+  <text x="20" y="298" fill="#555" font-size="12">TrackPoint's own line on GP19 (DATA) / GP20 (CLK) via PIO1.</text>
+</svg>

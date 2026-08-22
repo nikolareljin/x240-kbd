@@ -24,6 +24,8 @@ So one read is: pulse `PL` low, then clock 8 × *n* bits out while reading `Q7`.
 
 ## Chain schematic
 
+![74HC165 sense chain](../images/sense_chain.svg)
+
 ```
                  Pico
    GP17 (PL)  ───┬─────────────────┬─────────────────┐
@@ -86,7 +88,7 @@ Timing from the datasheet at 3.3 V is generous: `PL` pulse width min ~25 ns, `CP
 | Whole chain dead | `CE` not grounded, or `DS` of the last device floating and reading as bits |
 | Keys work but ghost with three held | Not a chain problem — the membrane lacks diodes. See Phase 1 |
 
-The [`tools/shift_register_test/`](../../tools/) CircuitPython script (M2) exercises the
+The [`tools/shift_register_test/`](https://github.com/nikolareljin/x240-kbd/blob/main/tools/) CircuitPython script (M2) exercises the
 chain with nothing else connected: ground each sense input in turn and watch the bit
 position light up.
 
