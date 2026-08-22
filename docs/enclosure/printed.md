@@ -18,16 +18,23 @@ than every common print bed:
 | Bambu X1 / P1 / A1 | 256 × 256 | no |
 | Prusa XL, Bambu H2D, Elegoo Neptune 4 Max | ≥ 320 | yes |
 
-So the case is printed as **two halves** (milestone M5), joined at the centreline:
+So the case is printed as **two halves**, joined at the centreline (`split_x` in
+`params.scad`):
 
-- Each half ≤ 160 mm in X — fits a 220 mm bed with the joint diagonal to the bed if needed.
-- Joint: **dovetail** along the full depth, plus two 3 mm alignment pins and an internal
-  bridging plate screwed across the seam (the perfboard sled doubles as that plate).
-- The gasket ledge and vent slots run uninterrupted across the joint so the seam is not a
-  dust path.
-- One parametric source: `half = "left" | "right" | "both"` in `bottom_case.scad`.
+- Each half is 154.5 mm wide plus 10 mm of tabs — fits a 220 mm bed flat.
+- **Floor tabs:** three dovetail tabs (`tab_count`, `tab_w`, `tab_flare`, `tab_len`) on the
+  left half's floor drop into matching pockets in the right half; pockets are grown by
+  `joint_gap` (0.15 mm per face — tune with a 30 mm coupon).
+- **Wall half-lap:** on the front and rear walls the left half's outer half-thickness
+  continues 8 mm past the seam; the right wall is recessed to match.
+- **Pins:** two 3 mm holes through the laps take a length of filament or brass rod.
+- **The sled** screws to four bosses, two per half — that is what makes the joined shell
+  stiff; the tabs only locate it.
+- The gasket ledge continues across the seam so it is not a dust path.
+- `half = "left" | "right" | "both"` — `"both"` for a large-format printer.
 
-If you have a large-format printer, set `half = "both"` and print it whole.
+The joint is verified every `./dev test`: `cad/tests/joint_intersection.scad` renders the
+overlap of the two halves and `scripts/check_cad_joint.py` fails if it has any volume.
 
 ## The eight printed parts
 
@@ -36,17 +43,19 @@ If you have a large-format printer, set `half = "both"` and print it whole.
 | 1 | Bottom case, left | `bottom_case.scad` (`half="left"`) | Shell, bosses, gasket ledge, vents, USB cutout, light-pipe aperture, foot recesses | 1 |
 | 2 | Bottom case, right | `bottom_case.scad` (`half="right"`) | as above | 1 |
 | 3 | Pico mount bracket | `pico_mount_bracket.scad` | Cradle holding the Pico at a fixed height (Rev A only; Rev B mounts the Pico on the board) | 1 |
-| 4 | FPC cable guide | `fpc_cable_guide.scad` | Enforces ≥ 5 mm bend radius on the keyboard FFC | 2 |
+| 4 | FPC cable guide | `fpc_cable_guide.scad` (`cable="keyboard"`/`"clickpad"`) | Enforces ≥ 5 mm bend radius on the FFC | 2 + 1 |
 | 5 | Perfboard sled | `perfboard_sled.scad` | Tray with the common M2 hole pattern; holds Rev A stripboard or Rev B PCB; bridges the case seam | 1 |
-| 6 | USB strain relief | `usb_strain_relief.scad` | Snap-in bezel gripping the cable jacket so a pull loads the case, not the Pico's connector | 1 |
+| 6 | USB strain relief | `usb_strain_relief.scad` | Two-piece clamp (M2 bolts) gripping the cable jacket, screwed to the floor, so a pull loads the case, not the Pico's connector | 1 set |
 | 7 | Tilt feet | `tilt_feet.scad` | Rear risers for a typing angle; front recesses take 10 mm rubber feet | 2 |
-| 8 | ZIF support block | `zif_support_block.scad` | Backs up the FPC connectors against insertion force so they do not lift off the board | 2 |
+| 8 | ZIF support block | `zif_support_block.scad` (`variant="keyboard"`/`"clickpad"`) | Backs up the FPC connectors against insertion force so they do not lift off the board | 1 + 1 |
 | 9 | LED light pipe | `led_light_pipe.scad` | Carries the touchpad LED to the deck surface; printed in clear PETG or natural PLA | 1 |
 
 (Nine files, "eight parts" in the issues because the two case halves come from one source.)
 
-All dimensions come from one shared file, `cad/params.scad`, populated from caliper
-measurements of the real X240 top section. No number may be duplicated across files.
+All dimensions come from one shared file, `cad/params.scad`; values marked `MEASURE` are
+targets until the real X240 deck is measured (#44). No number may be duplicated across
+files. Render everything with `./dev build cad` → `out/cad/*.stl` (OpenSCAD 2021.01 in
+Docker; PNG previews are not available headless — open the `.scad` in OpenSCAD to look).
 
 ## Print settings
 

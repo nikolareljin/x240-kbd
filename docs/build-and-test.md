@@ -41,7 +41,9 @@ Per `hardware/wiring/wiring_diagram.md`. Complete its pre-power checklist before
 ./dev deploy         # waits for the RPI-RP2 drive and copies the UF2
 ```
 
-`QMK_HOME` points the build at an existing checkout. First flash: BOOTSEL → `RPI-RP2`.
+`QMK_HOME` points the build at an existing checkout. Images and the QMK commit are pinned
+in `scripts/toolchain.env`; `scripts/pull_toolchain.sh --save <dir>` writes offline
+tarballs and `--load <dir>` restores them on a machine without registry access. First flash: BOOTSEL → `RPI-RP2`.
 Later: `./dev deploy`, Bootmagic (top-left key), or the `RUN` reset switch + BOOTSEL.
 Debug output: `./dev logs` (`qmk console`).
 
@@ -56,7 +58,8 @@ Debug output: `./dev logs` (`qmk console`).
 
 ## 7. Enclosure (M5 or M6)
 
-Printed: measure, `params.scad`, print halves + parts, dry-fit, tolerance report.
+Printed: measure, `params.scad`, `./dev build cad`, print halves + parts, dry-fit,
+tolerance report. The split-joint interference check runs in `./dev test`.
 Hand-made: E1 base cover or another variant. Then the assembly order in
 `docs/enclosure/presentation.md`.
 

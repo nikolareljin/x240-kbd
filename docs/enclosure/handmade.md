@@ -18,8 +18,9 @@ as the top; they differ only in what closes the bottom.
 
 ## E1 — Reuse the original base cover (recommended)
 
-FRU `04X5184` / `00HT389` / `0C64937`, ~$22–25 used on
-[eBay](https://www.ebay.com/itm/121981528885). It is the laptop's own bottom shell: every
+FRU `04X5184` / `00HT389` / `0C64937` — the moulding itself is labelled `SCB0G39215` or
+`AP0SX000I00`, and eBay listings use any of these — ~$22–25 used
+([eBay 04X5184](https://www.ebay.com/itm/121981528885), [eBay SCB0G39215](https://www.ebay.com/itm/156310389262)). It is the laptop's own bottom shell: every
 screw boss, clip and edge profile already matches the palmrest. **Zero CAD, zero
 measuring.**
 

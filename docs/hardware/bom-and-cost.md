@@ -93,7 +93,7 @@ Full detail in [`../enclosure/handmade.md`](../enclosure/handmade.md).
 
 | Variant | Est. | Note |
 |---|---|---|
-| **E1 Reuse the original X240 base cover** — recommended | $22–25 | FRU `04X5184` / `00HT389`. Already mates to the palmrest with the stock screw bosses; gut it, mount the board on adhesive standoffs, cut a rear USB slot. No CAD at all. [eBay](https://www.ebay.com/itm/121981528885) |
+| **E1 Reuse the original X240 base cover** — recommended | $22–25 | FRU `04X5184` / `00HT389`, labelled `SCB0G39215` / `AP0SX000I00` on the part. Already mates to the palmrest with the stock screw bosses; gut it, mount the board on adhesive standoffs, cut a rear USB slot. No CAD at all. [eBay](https://www.ebay.com/itm/121981528885) |
 | E2 Laser-cut acrylic / aluminium sandwich | $30–60 | Plates exported from the same OpenSCAD source; cut by [SendCutSend](https://sendcutsend.com/) or [Ponoko](https://www.ponoko.com/) |
 | E3 Off-the-shelf sloped console | $50–60 | [Hammond 515-0950](https://www.hammfg.com/electronics/small-case/general-purpose/500-515-519), 300 × 200 × 58 mm; the 309 mm deck overhangs 9 mm |
 | E4 Plywood base + hardwood frame | $10–20 | Saw, drill, finish |

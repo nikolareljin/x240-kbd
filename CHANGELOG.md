@@ -4,6 +4,27 @@ All notable project changes should be recorded here.
 
 ## Unreleased
 
+### Printed enclosure (milestone M5, issues #40 #41 #42 #43)
+
+- `cad/params.scad` is now the single home of every dimension; all parts include it.
+  Values marked `MEASURE` wait for a real deck (#44).
+- `cad/bottom_case.scad` prints as two halves (`half = "left"|"right"|"both"`): three
+  dovetail floor tabs, a half-lap on the front and rear walls, two 3 mm pin holes, and
+  the sled bosses that bridge the seam. Also gains the light-pipe aperture, foot
+  recesses, tilt-foot screw holes, a reset-button hole and optional stiffening ribs.
+- New parts: `perfboard_sled`, `usb_strain_relief` (two-piece clamp), `tilt_feet`,
+  `zif_support_block` (keyboard/clickpad variants), `led_light_pipe`;
+  `pico_mount_bracket` and `fpc_cable_guide` re-parameterised.
+- `./dev build cad` renders all 11 STL jobs in the OpenSCAD image; `./dev test` renders
+  the intersection of the two halves and fails on any shared volume
+  (`cad/tests/joint_intersection.scad`, `scripts/check_cad_joint.py`).
+
+### Toolchain pinning
+
+- `scripts/toolchain.env` pins the three Docker images by digest and the `qmk_firmware`
+  commit; `scripts/pull_toolchain.sh` pulls them and can `--save`/`--load` offline
+  tarballs or `--refresh` the pins. `./dev install` clones QMK at exactly that commit.
+
 ### Developer commands and CI
 
 - `./dev` entry point from the script-helpers `dev-cli` template (`scripts/cli.sh`,
