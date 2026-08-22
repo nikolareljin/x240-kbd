@@ -10,7 +10,7 @@
 # not be edited; this file is where the verbs get their meaning.
 #
 #   ./dev install                    submodules, docker images, qmk_firmware checkout
-#   ./dev build [firmware|docs|tools|all]
+#   ./dev build [firmware|docs|tools|cad|all]
 #   ./dev test                       host pytest, py_compile, link check, shellcheck
 #   ./dev preflight                  test + build all (what CI runs)
 #   ./dev deploy [firmware|<tool>]   copy the UF2 to RPI-RP2, or a tool to CIRCUITPY
@@ -22,12 +22,17 @@
 
 shlib_import file
 
+# Pinned images and the qmk_firmware commit: scripts/toolchain.env (pull_toolchain.sh).
+# shellcheck source=/dev/null
+source "$DEV_SCRIPT_DIR/toolchain.env"
+
 X240_KB_DIR="$DEV_REPO_ROOT/firmware/qmk/keyboards/x240_pico"
 X240_KB="x240_pico"
 X240_KM="default"
 X240_QMK_HOME="${QMK_HOME:-$DEV_REPO_ROOT/qmk_firmware}"
-X240_QMK_IMAGE="${QMK_DOCKER_IMAGE:-qmkfm/qmk_cli}"
-X240_JEKYLL_IMAGE="${JEKYLL_DOCKER_IMAGE:-jekyll/jekyll:4}"
+X240_QMK_IMAGE="${QMK_DOCKER_IMAGE:-$QMK_IMAGE}"
+X240_JEKYLL_IMAGE="${JEKYLL_DOCKER_IMAGE:-$JEKYLL_IMAGE}"
+X240_OPENSCAD_IMAGE="${OPENSCAD_DOCKER_IMAGE:-$OPENSCAD_IMAGE}"
 X240_OUT="$DEV_REPO_ROOT/out"   # not build/: ./build is the shim
 X240_UF2="$X240_QMK_HOME/.build/${X240_KB}_${X240_KM}.uf2"
 X240_TOOLS=(matrix_probe ps2_sniffer shift_register_test)
@@ -40,6 +45,16 @@ x240_require_docker() {
 }
 
 x240_docker_tty() { [[ -t 0 && -t 1 ]] && printf -- '-it' || printf -- '-i'; }
+
+# Shallow clone of qmk_firmware at exactly QMK_FIRMWARE_REF, submodules included.
+x240_clone_qmk() {
+  mkdir -p "$X240_QMK_HOME"
+  git -C "$X240_QMK_HOME" init -q
+  git -C "$X240_QMK_HOME" remote add origin "$QMK_FIRMWARE_REPO" 2>/dev/null || true
+  git -C "$X240_QMK_HOME" fetch -q --depth 1 origin "$QMK_FIRMWARE_REF"
+  git -C "$X240_QMK_HOME" checkout -q FETCH_HEAD
+  git -C "$X240_QMK_HOME" submodule update -q --init --recursive --depth 1 --jobs 8
+}
 
 # Run a shell command inside the QMK image with the checkout and this keyboard mounted.
 # The bind-mounted checkout is owned by the host user, so git inside the container needs
@@ -96,15 +111,18 @@ project_install() {
   log_info "install: submodules"
   git -C "$DEV_REPO_ROOT" submodule update --init --recursive
   x240_require_docker
-  log_info "install: docker images"
-  docker pull -q "$X240_QMK_IMAGE" >/dev/null
-  docker pull -q "$X240_JEKYLL_IMAGE" >/dev/null
+  log_info "install: pinned docker images (scripts/toolchain.env)"
+  bash "$DEV_SCRIPT_DIR/pull_toolchain.sh"
   if [[ -f "$X240_QMK_HOME/Makefile" ]]; then
-    log_info "install: qmk_firmware already at $X240_QMK_HOME"
+    local have; have="$(git -C "$X240_QMK_HOME" rev-parse HEAD 2>/dev/null || echo unknown)"
+    if [[ "$have" == "$QMK_FIRMWARE_REF" ]]; then
+      log_info "install: qmk_firmware already at $X240_QMK_HOME @ ${have:0:12}"
+    else
+      log_warn "install: qmk_firmware at $X240_QMK_HOME is ${have:0:12}, pinned ref is ${QMK_FIRMWARE_REF:0:12} — run ./dev update"
+    fi
   else
-    log_info "install: cloning qmk_firmware (shallow, with submodules) into $X240_QMK_HOME"
-    git clone -q --depth 1 --recurse-submodules --shallow-submodules -j8 \
-      https://github.com/qmk/qmk_firmware "$X240_QMK_HOME"
+    log_info "install: cloning qmk_firmware @ ${QMK_FIRMWARE_REF:0:12} (shallow, with submodules) into $X240_QMK_HOME"
+    x240_clone_qmk
   fi
   if command -v python3 >/dev/null 2>&1 && ! python3 -c 'import pytest' 2>/dev/null; then
     log_warn "python3 has no pytest; ./dev test will try 'pip install --user pytest'"
@@ -137,15 +155,62 @@ x240_build_tools() {
   print_success "build: tools compile"
 }
 
+# Render every printed part to STL (and a PNG preview) in the OpenSCAD image.
+# Parts with variants are rendered once per variant via -D.
+x240_build_cad() {
+  x240_require_docker
+  local out="$X240_OUT/cad" rc=0
+  mkdir -p "$out"
+  local jobs=(
+    "bottom_case_left:bottom_case.scad:half=\"left\""
+    "bottom_case_right:bottom_case.scad:half=\"right\""
+    "perfboard_sled:perfboard_sled.scad:"
+    "usb_strain_relief:usb_strain_relief.scad:"
+    "tilt_feet:tilt_feet.scad:"
+    "zif_support_block_keyboard:zif_support_block.scad:variant=\"keyboard\""
+    "zif_support_block_clickpad:zif_support_block.scad:variant=\"clickpad\""
+    "led_light_pipe:led_light_pipe.scad:"
+    "pico_mount_bracket:pico_mount_bracket.scad:"
+    "fpc_cable_guide_keyboard:fpc_cable_guide.scad:cable=\"keyboard\""
+    "fpc_cable_guide_clickpad:fpc_cable_guide.scad:cable=\"clickpad\""
+  )
+  local job name src def
+  for job in "${jobs[@]}"; do
+    IFS=: read -r name src def <<<"$job"
+    log_info "build: cad $name"
+    local dargs=()
+    [[ -n "$def" ]] && dargs=(-D "$def")
+    if ! docker run --rm -v "$DEV_REPO_ROOT/cad":/cad:ro -v "$out":/out -w /cad "$X240_OPENSCAD_IMAGE" \
+        openscad -q "${dargs[@]}" -o "/out/$name.stl" "$src" 2>&1 | grep -vE '^\s*$' | sed 's/^/   /'; then
+      :
+    fi
+    [[ -s "$out/$name.stl" ]] || { log_error "build: cad $name produced no STL"; rc=1; }
+  done
+  if (( rc == 0 )); then print_success "build: $out ($(find "$out" -name "*.stl" | wc -l) STL files)"; fi
+  return $rc
+}
+
 project_build() {
   local what="${DEV_ARGS[0]:-firmware}"
   case "$what" in
     firmware) x240_build_firmware ;;
     docs)     x240_build_docs ;;
     tools)    x240_build_tools ;;
-    all)      x240_build_tools && x240_build_firmware && x240_build_docs ;;
-    *) log_error "build: unknown target '$what' (firmware|docs|tools|all)"; exit 2 ;;
+    cad)      x240_build_cad ;;
+    all)      x240_build_tools && x240_build_firmware && x240_build_docs && x240_build_cad ;;
+    *) log_error "build: unknown target '$what' (firmware|docs|tools|cad|all)"; exit 2 ;;
   esac
+}
+
+# The two case halves must not share any volume: render their intersection and
+# require its X extent to be ~0 (touching faces on the seam plane are expected).
+x240_test_cad_joint() {
+  command -v docker >/dev/null 2>&1 || { log_warn "test: no docker, skipping the CAD joint test"; return 0; }
+  log_info "test: CAD split-joint interference"
+  local out="$X240_OUT/cad-test"; mkdir -p "$out"
+  docker run --rm -v "$DEV_REPO_ROOT/cad":/cad:ro -v "$out":/out -w /cad/tests "$X240_OPENSCAD_IMAGE" \
+    openscad -q -o /out/joint_intersection.stl joint_intersection.scad 2>&1 | grep -vE '^\s*$' | sed 's/^/   /' || true
+  python3 "$DEV_REPO_ROOT/scripts/check_cad_joint.py" "$out/joint_intersection.stl"
 }
 
 project_test() {
@@ -156,6 +221,7 @@ project_test() {
   x240_build_tools || rc=1
   log_info "test: markdown relative links"
   python3 "$DEV_REPO_ROOT/scripts/check_links.py" "$DEV_REPO_ROOT" || rc=1
+  x240_test_cad_joint || rc=1
   if command -v shellcheck >/dev/null 2>&1; then
     log_info "test: shellcheck (repo-owned scripts; cli.sh/_bootstrap.sh are the script-helpers template)"
     ( cd "$DEV_REPO_ROOT" && shellcheck -x dev build test flash probe site scripts/project.sh ) || rc=1
@@ -227,10 +293,12 @@ project_clean() {
 project_update() {
   git -C "$DEV_REPO_ROOT" submodule update --remote --merge scripts/script-helpers
   if [[ -d "$X240_QMK_HOME/.git" ]]; then
-    log_info "update: qmk_firmware"
-    git -C "$X240_QMK_HOME" pull -q --ff-only && git -C "$X240_QMK_HOME" submodule update -q --init --recursive
+    log_info "update: qmk_firmware -> pinned ${QMK_FIRMWARE_REF:0:12}"
+    git -C "$X240_QMK_HOME" fetch -q --depth 1 origin "$QMK_FIRMWARE_REF" \
+      && git -C "$X240_QMK_HOME" checkout -q FETCH_HEAD \
+      && git -C "$X240_QMK_HOME" submodule update -q --init --recursive --depth 1 --jobs 8
   fi
-  command -v docker >/dev/null 2>&1 && { docker pull -q "$X240_QMK_IMAGE" >/dev/null; docker pull -q "$X240_JEKYLL_IMAGE" >/dev/null; }
+  command -v docker >/dev/null 2>&1 && bash "$DEV_SCRIPT_DIR/pull_toolchain.sh"
   print_success "update: done"
 }
 
