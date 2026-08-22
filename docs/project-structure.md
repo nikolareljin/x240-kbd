@@ -30,6 +30,12 @@ build = `qmk compile` in the `qmkfm/qmk_cli` container against a `qmk_firmware` 
 `scripts/script-helpers/` is the submodule (branch `production`). Shims: `./build`,
 `./test`, `./flash`, `./probe`, `./site`. Output: `out/` (ignored).
 
+**Toolchain pinning:** `scripts/toolchain.env` holds the three Docker images by digest
+(`qmkfm/qmk_cli`, `jekyll/jekyll`, `openscad/openscad`) and the exact `qmk_firmware`
+commit; `scripts/pull_toolchain.sh` pulls them (`--save`/`--load` for offline tarballs,
+`--refresh` to re-resolve, `--verify` to print versions). `./dev install` and `./dev
+update` go through it, so a build is repeatable later.
+
 `.github/workflows/ci.yml` calls ci-helpers' reusable `ci.yml@production` with
 `./dev test` and `./dev install && ./dev build all`.
 
@@ -55,10 +61,11 @@ is unit-tested on a PC under `tools/tests/` (pytest). Index: `tools/README.md`.
 
 ## `cad/`
 
-OpenSCAD sources: `params.scad` (shared measured dimensions, M5), the split `bottom_case`,
-`pico_mount_bracket`, `fpc_cable_guide`, `perfboard_sled`, `usb_strain_relief`,
-`tilt_feet`, `zif_support_block`, `led_light_pipe`, `export_plates` (DXF for laser cutting,
-M6). Meshes go to `cad/exports/` and are not committed.
+OpenSCAD sources, all including `params.scad` (the only place a dimension lives): the
+split `bottom_case`, `perfboard_sled`, `usb_strain_relief`, `tilt_feet`, `zif_support_block`,
+`led_light_pipe`, `pico_mount_bracket`, `fpc_cable_guide`; `tests/joint_intersection.scad`
+is the split-joint check run by `./dev test`. `export_plates` (DXF, M6) is still to come.
+`./dev build cad` renders to `out/cad/`; meshes are never committed. Index: `cad/README.md`.
 
 ## `docs/`
 

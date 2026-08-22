@@ -92,7 +92,7 @@ Docker, so the host needs only `docker`, `git` and `python3`):
 
 ```bash
 ./dev install            # submodules, docker images, a shallow qmk_firmware checkout
-./dev build [firmware|docs|tools|all]
+./dev build [firmware|docs|tools|cad|all]
 ./dev test               # host pytest for the tools, link check, shellcheck
 ./dev preflight          # everything CI runs: test + build all
 ./dev deploy             # copy the UF2 to the Pico's RPI-RP2 drive  (alias: ./flash)
@@ -102,7 +102,9 @@ Docker, so the host needs only `docker`, `git` and `python3`):
 ```
 
 Shims `./build`, `./test`, `./flash`, `./probe`, `./site` wrap the same verbs. Artifacts
-land in `out/`. CI (`.github/workflows/ci.yml`, via
+land in `out/`. The Docker images and the `qmk_firmware` commit are **pinned by digest**
+in `scripts/toolchain.env` (`scripts/pull_toolchain.sh` pulls, saves or refreshes them),
+so today's build can be repeated later. CI (`.github/workflows/ci.yml`, via
 [ci-helpers](https://github.com/nikolareljin/ci-helpers)) runs `./dev test` and
 `./dev build all` on every push and PR.
 

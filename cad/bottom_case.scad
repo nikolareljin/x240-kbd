@@ -1,207 +1,120 @@
 /*
- * bottom_case.scad — X240 Pico Keyboard Bottom Enclosure
- * =======================================================
- * OpenSCAD parametric design for the 3D-printed bottom shell.
- * The X240 top section (keyboard deck + palmrest) is reused as-is.
- * This part closes the assembly from below.
+ * bottom_case.scad — X240 Pico keyboard bottom shell, printed as two halves
+ * =========================================================================
+ * The X240 top section (deck + palmrest) is the lid; this closes the assembly.
+ * 309 x 210 mm exceeds every common print bed, so the shell splits at the
+ * centre line with dovetail tabs in the floor, a half-lap on the front and rear
+ * walls, and two alignment pins.  The perfboard sled screws across the seam and
+ * is what makes the joined case stiff.
  *
- * Workflow:
- *   1. Measure your X240 top section with digital calipers.
- *   2. Update the Parameters section below.
- *   3. Press F6 (Render) then File → Export → Export as STL.
- *   4. Print in PETG: 0.2 mm layers, 4 perimeter walls, 25% gyroid infill.
+ *   half = "left" | "right" | "both"     ("both" for a large-format printer)
  *
- * Coordinate system: X = width (left/right), Y = depth (front/back), Z = height
+ * All dimensions come from params.scad.  Export:  F6, then File > Export > STL,
+ * or ./dev build cad for every part at once.
  */
+include <params.scad>
 
-// ============================================================
-// Parameters — edit these to match your measured X240 dimensions
-// ============================================================
+half = "left";
 
-// Outer dimensions of the keyboard deck footprint (measure with calipers)
-case_width  = 309.0;   // X — left to right (mm)
-case_depth  = 210.0;   // Y — front to back (mm)
-
-// Wall thickness
-wall_t = 2.5;          // (mm) — 2.5 recommended for PETG strength
-
-// Corner radius (matches X240 rounded corners)
-corner_r = 3.0;
-
-// Internal cavity height — must fit: Pico (3.5 mm) + perfboard (2 mm) + standoffs (6 mm) + cable routing
-internal_h = 18.0;
-
-// Total external case height
-case_h = internal_h + wall_t;
-
-// Screw boss dimensions (M2)
-boss_od     = 6.0;     // boss outer diameter
-boss_id     = 2.2;     // M2 screw hole inner diameter
-boss_h      = case_h;  // bosses extend full height
-
-// USB connector cutout
-usb_c = false;         // false = Micro-USB, true = USB-C
-usb_w = usb_c ? 9.5 : 8.5;   // cutout width
-usb_h = usb_c ? 4.0 : 3.5;   // cutout height
-// USB cutout centre position (from left edge, from front edge)
-usb_x = case_width / 2;
-usb_y = 0;             // rear edge (y=0 is front)
-
-// Vent slots (set to false to disable)
-vents = true;
-vent_w     = 40.0;
-vent_h     = 2.0;
-vent_count = 4;
-vent_spacing = 6.0;
-
-// Foam gasket ledge (1 mm step around perimeter for foam tape)
-gasket_depth  = 1.2;
-gasket_width  = 2.0;
-
-// Rendering quality
-$fn = 64;
-
-// ============================================================
-// Screw boss positions — measured from bottom-left corner (x=0, y=0)
-// Update these after measuring your X240 top section screw holes.
-// ============================================================
-boss_positions = [
-    [  8.0,   8.0 ],   // front-left
-    [ 60.0,   8.0 ],
-    [150.0,   8.0 ],   // front-centre
-    [250.0,   8.0 ],
-    [301.0,   8.0 ],   // front-right
-    [  8.0, 202.0 ],   // rear-left
-    [150.0, 202.0 ],   // rear-centre
-    [301.0, 202.0 ],   // rear-right
-];
-
-// ============================================================
-// Modules
-// ============================================================
-
+// ---------------------------------------------------------------- primitives
 module rounded_box(w, d, h, r) {
-    // Solid box with rounded vertical corners
-    hull() {
-        translate([r, r, 0])       cylinder(h=h, r=r);
-        translate([w-r, r, 0])     cylinder(h=h, r=r);
-        translate([r, d-r, 0])     cylinder(h=h, r=r);
-        translate([w-r, d-r, 0])   cylinder(h=h, r=r);
-    }
+    hull() for (x = [r, w - r], y = [r, d - r]) translate([x, y, 0]) cylinder(h = h, r = r);
 }
 
 module shell() {
-    // Hollow shell: outer box minus inner cavity
     difference() {
         rounded_box(case_width, case_depth, case_h, corner_r);
         translate([wall_t, wall_t, wall_t])
-            rounded_box(
-                case_width  - 2*wall_t,
-                case_depth  - 2*wall_t,
-                case_h,          // open top (no lid — X240 top is the lid)
-                max(0.1, corner_r - wall_t)
-            );
+            rounded_box(case_width - 2 * wall_t, case_depth - 2 * wall_t, case_h, max(0.1, corner_r - wall_t));
     }
 }
 
-module boss(x, y) {
-    translate([x, y, 0])
-        difference() {
-            cylinder(h=boss_h, d=boss_od);
-            cylinder(h=boss_h, d=boss_id);
-        }
+module boss(x, y, h = case_h, od = boss_od, id = boss_id) {
+    translate([x, y, 0]) difference() { cylinder(h = h, d = od); translate([0, 0, wall_t]) cylinder(h = h, d = id); }
 }
 
-module all_bosses() {
-    for (pos = boss_positions)
-        boss(pos[0], pos[1]);
-}
-
-module usb_cutout() {
-    // Cutout through the rear wall for USB cable exit
-    translate([usb_x - usb_w/2, -1, wall_t + 2])
-        cube([usb_w, wall_t + 2, usb_h]);
-}
-
-module vent_slots() {
-    // Horizontal slots on the bottom face for airflow
-    if (vents) {
-        start_x = (case_width - vent_w) / 2;
-        start_y = case_depth / 2 - ((vent_count - 1) * vent_spacing) / 2;
-        for (i = [0 : vent_count - 1]) {
-            translate([start_x, start_y + i * vent_spacing, -1])
-                cube([vent_w, vent_h, wall_t + 2]);
-        }
-    }
-}
+module deck_bosses()  { for (p = deck_boss_positions) boss(p[0], p[1]); }
+module sled_bosses()  { for (o = sled_boss_offsets) boss(sled_center[0] + o[0], sled_center[1] + o[1], wall_t + 4, 7, boss_id); }
 
 module gasket_ledge() {
-    // Recessed step around the top perimeter for 1 mm foam gasket tape
-    difference() {
+    translate([0, 0, case_h - gasket_depth]) difference() {
         rounded_box(case_width, case_depth, gasket_depth, corner_r);
         translate([gasket_width, gasket_width, -1])
-            rounded_box(
-                case_width  - 2*gasket_width,
-                case_depth  - 2*gasket_width,
-                gasket_depth + 2,
-                max(0.1, corner_r - gasket_width)
-            );
+            rounded_box(case_width - 2 * gasket_width, case_depth - 2 * gasket_width, gasket_depth + 2, max(0.1, corner_r - gasket_width));
     }
 }
 
-// ============================================================
-// Perfboard mount rail (two parallel rails inside the case)
-// The perfboard rests on these and is secured with M2 screws into bosses.
-// ============================================================
-rail_h      = 4.0;    // height of rail above case floor
-rail_w      = 4.0;    // rail width
-rail_length = 90.0;   // rail length — adjust to perfboard size
-rail_x      = 40.0;   // X position of left rail
-rail_y      = 80.0;   // Y position of both rails (centred roughly)
-rail_sep    = 60.0;   // separation between the two rails (= perfboard width)
-
-module perfboard_rails() {
-    // Left rail
-    translate([rail_x, rail_y, wall_t])
-        cube([rail_w, rail_length, rail_h]);
-    // Right rail
-    translate([rail_x + rail_sep, rail_y, wall_t])
-        cube([rail_w, rail_length, rail_h]);
+module stiffening_ribs() {
+    if (ribs) for (x = [case_width * 0.25, case_width * 0.75])
+        translate([x - rib_t / 2, wall_t, wall_t]) cube([rib_t, case_depth - 2 * wall_t, rib_h]);
 }
 
-// ============================================================
-// FPC cable clip (small bridge to guide cable without kinking)
-// Minimum bend radius enforced by the 5 mm bridge height.
-// ============================================================
-module fpc_clip(x, y) {
-    clip_w   = 12.0;
-    clip_d   = 4.0;
-    clip_h   = 5.0;    // 5 mm = safe minimum bend radius for 0.5 mm FPC
-    arch_t   = 1.5;
-    translate([x, y, wall_t]) {
-        difference() {
-            cube([clip_w, clip_d, clip_h]);
-            translate([arch_t, -1, arch_t])
-                cube([clip_w - 2*arch_t, clip_d + 2, clip_h]);
-        }
+// ---------------------------------------------------------------- cutouts
+module usb_cutout() {
+    translate([usb_x - usb_w / 2 - fit, case_depth - wall_t - 1, usb_z]) cube([usb_w + 2 * fit, wall_t + 2, usb_h + 2 * fit]);
+}
+module vent_slots() {
+    if (vents) {
+        sx = (case_width - vent_w) / 2; sy = case_depth / 2 - ((vent_count - 1) * vent_spacing) / 2;
+        for (i = [0 : vent_count - 1]) translate([sx, sy + i * vent_spacing, -1]) cube([vent_w, vent_h, wall_t + 2]);
+    }
+}
+module foot_recesses()   { for (p = foot_positions) translate([p[0], p[1], -1]) cylinder(h = foot_recess + 1, d = foot_d + fit); }
+module tilt_screw_holes(){ for (p = tilt_positions) translate([p[0], p[1], -1]) cylinder(h = wall_t + 2, d = tilt_screw_d); }
+module light_pipe_hole() { translate([pipe_position[0], pipe_position[1], -1]) cylinder(h = wall_t + 2, d = pipe_d + fit); }
+module reset_hole()      { translate([sled_center[0] - 30, sled_center[1] + 30, -1]) cylinder(h = wall_t + 2, d = 3.2); }
+
+// ---------------------------------------------------------------- split joint
+// Dovetail tab profile in XY, extruded through the floor; the left half carries
+// the tabs, the right half the pockets (pocket = tab grown by joint_gap).
+module tab_profile(grow = 0) {
+    w0 = tab_w + 2 * grow; w1 = tab_w + tab_flare + 2 * grow; l = tab_len + grow;
+    polygon([[0, -w0 / 2], [l, -w1 / 2], [l, w1 / 2], [0, w0 / 2]]);
+}
+module floor_tabs(grow = 0) {
+    for (i = [1 : tab_count])
+        translate([split_x, case_depth * i / (tab_count + 1), 0])
+            linear_extrude(wall_t) tab_profile(grow);
+}
+// Half-lap on the front and rear walls: the left wall's outer half continues past
+// the seam; the right wall's outer half stops short by the same amount.
+lap_len = 8;
+module wall_lap(grow = 0) {
+    for (y = [0, case_depth - wall_t / 2])
+        translate([split_x - grow, y - grow, wall_t]) cube([lap_len + 2 * grow, wall_t / 2 + 2 * grow, case_h - wall_t + 1]);
+}
+module pins(grow = 0) {
+    for (y = [wall_t / 4, case_depth - wall_t / 4])
+        translate([split_x - pin_len / 2 - grow, y, case_h / 2]) rotate([0, 90, 0]) cylinder(h = pin_len + 2 * grow, d = pin_d + 2 * grow);
+}
+
+module whole_case() {
+    difference() {
+        union() { shell(); deck_bosses(); sled_bosses(); gasket_ledge(); stiffening_ribs(); }
+        usb_cutout(); vent_slots(); foot_recesses(); tilt_screw_holes(); light_pipe_hole(); reset_hole();
     }
 }
 
-// ============================================================
-// Final assembly
-// ============================================================
-difference() {
+module left_half() {
     union() {
-        shell();
-        all_bosses();
-        perfboard_rails();
-        // Gasket ledge at the top of the case
-        translate([0, 0, case_h - gasket_depth])
-            gasket_ledge();
-        // FPC cable guides — adjust X/Y positions to your cable routing
-        fpc_clip(20, 100);
-        fpc_clip(20, 120);
+        difference() {
+            intersection() { whole_case(); translate([-1, -1, -1]) cube([split_x + 1, case_depth + 2, case_h + 2]); }
+            wall_lap(joint_gap);             // clear the lap pocket on the inner half...
+            pins(joint_gap);
+        }
+        intersection() { whole_case(); floor_tabs(); }   // ...then add the tabs and lap tongue
+        intersection() { whole_case(); wall_lap(); }
     }
-    usb_cutout();
-    vent_slots();
 }
+module right_half() {
+    difference() {
+        intersection() { whole_case(); translate([split_x, -1, -1]) cube([case_width - split_x + 1, case_depth + 2, case_h + 2]); }
+        floor_tabs(joint_gap);
+        wall_lap(joint_gap);
+        pins(joint_gap);
+    }
+}
+
+if (!split || half == "both") whole_case();
+else if (half == "left") left_half();
+else right_half();

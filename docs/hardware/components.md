@@ -191,9 +191,9 @@ socket.
 
 | | |
 |---|---|
-| FRU | `04X5184` / `00HT389` / `0C64937` |
+| Part numbers | FRU `04X5184` / `00HT389` / `0C64937`; the label on the part itself reads `SCB0G39215` or `AP0SX000I00` — listings use any of these for the same cover |
 | Role | Reused as the bottom enclosure — it already mates to the palmrest with the stock bosses |
-| Buy | [eBay 04X5184](https://www.ebay.com/itm/121981528885) · Newegg |
+| Buy | [eBay 04X5184](https://www.ebay.com/itm/121981528885) · [eBay SCB0G39215](https://www.ebay.com/itm/156310389262) · Newegg |
 
 ### Synaptics ClickPad (inside the palmrest)
 
