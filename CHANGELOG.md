@@ -4,6 +4,17 @@ All notable project changes should be recorded here.
 
 ## Unreleased
 
+### Hand-made enclosure (milestone M6, issues #46 #47 #48)
+
+- `cad/export_plates.scad` projects the printed case's solids into the laser-cut bottom
+  plate, the perimeter spacer ring (with USB notch) and the presentation-box foam insert;
+  `./dev build cad` exports them as DXF alongside the STLs.
+- `docs/enclosure/handmade.md`: E2 file/material/hardware tables and ordering flow, E3
+  Hammond console step-by-step, E4 wood-frame cut list and sequence.
+- `docs/presentation/label.svg` (60 × 40 mm case label) and
+  `docs/presentation/quick-start-card.md` (A6, two sides); box dimensions and the insert
+  derived in `docs/enclosure/presentation.md`.
+
 ### Printed enclosure (milestone M5, issues #40 #41 #42 #43)
 
 - `cad/params.scad` is now the single home of every dimension; all parts include it.

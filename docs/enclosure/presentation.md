@@ -46,13 +46,11 @@ For handing the finished keyboard to someone, or for the shelf.
 
 | Item | Spec |
 |---|---|
-| Outer box | Two-piece rigid cardboard ("shoulder box"), internal 330 × 230 × 60 mm. Stock sizes near this exist from packaging suppliers; a mailer-style kraft box is the cheap version. |
-| Insert | 20 mm EVA foam, cut to the deck outline with a 5 mm margin, plus a pocket for the USB cable and one for the quick-start card. Cut with a hot knife from a paper template printed from `cad/export_plates.scad`'s outline. |
+| Outer box | Two-piece rigid cardboard ("shoulder box"), internal **330 × 230 × 60 mm** (deck 309 × 210 + 5 mm foam margin + 5 mm clearance; 20.5 mm case + 20 mm foam + lid). Stock mailer boxes near 330 × 230 × 60 exist from packaging suppliers. |
+| Insert | 20 mm EVA or PE foam cut to `out/cad/box_insert.dxf` — the deck outline plus 5 mm, with a 60 × 40 mm pocket for the coiled cable and a 105 × 74 mm pocket for the A6 card. Laser-cut by the same service as the plates, or hot-knife it from the DXF printed 1:1. |
 | Cable | 1.5 m USB-A to Micro-USB (or USB-C), coiled with a velcro tie |
-| Label | 60 × 40 mm, printed: name, firmware version, FN-key legend, the repository URL as a QR code |
-| Quick-start card | A6, double-sided: plug in; FN layer map; Bootmagic/BOOTSEL for updates; "press the stick, not the pad, for the TrackPoint"; link to the site |
-
-The label template and the card are plain SVG/Markdown under `docs/presentation/` (M6).
+| Label | [`../presentation/label.svg`](../presentation/label.svg) — 60 × 40 mm: name, firmware version, FN legend, repository URL. Print on matte adhesive stock. |
+| Quick-start card | [`../presentation/quick-start-card.md`](../presentation/quick-start-card.md) — A6, two sides; print from the site or any Markdown renderer at 100 %. |
 
 ## What to tell the recipient
 

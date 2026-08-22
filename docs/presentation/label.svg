@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="60mm" height="40mm" viewBox="0 0 60 40" font-family="ui-sans-serif, system-ui, sans-serif">
+  <title>x240-kbd case label, 60 x 40 mm</title>
+  <rect x="0.5" y="0.5" width="59" height="39" rx="2" fill="#ffffff" stroke="#111" stroke-width="0.4"/>
+  <text x="3" y="7" font-size="5" font-weight="bold" fill="#111">x240-kbd</text>
+  <text x="3" y="11" font-size="2.1" fill="#444">X240 keyboard · ClickPad · TrackPoint · USB HID</text>
+  <text x="3" y="15.5" font-size="2.2" fill="#111">Firmware v0.2.0 · RP2040 · QMK · no drivers</text>
+  <g font-size="1.9" fill="#111">
+    <text x="3" y="20.5">FN+F1 mute · F2/F3 vol · F4 mic · F5/F6 bright</text>
+    <text x="3" y="23.5">FN+F11 light · FN+Esc lock · PgUp/PgDn Home/End</text>
+    <text x="3" y="26.5">Power: hold ½ s · stick = TrackPoint · corners click</text>
+    <text x="3" y="29.5">Update: Esc + plug in → drag .uf2 to RPI-RP2</text>
+  </g>
+  <text x="3" y="35" font-size="2.2" fill="#1565c0">github.com/nikolareljin/x240-kbd</text>
+  <text x="3" y="38" font-size="1.8" fill="#888">GPL-2.0 · built ________ · serial ________</text>
+</svg>
