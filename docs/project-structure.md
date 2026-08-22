@@ -36,8 +36,9 @@ build — see `docs/firmware/architecture.md`.
 
 ## `tools/`
 
-CircuitPython scripts run on the Pico as `code.py`: `matrix_probe/`, `ps2_sniffer/`, and
-(M2) `shift_register_test/`. Standalone; no host-side dependencies.
+CircuitPython scripts run on the Pico as `code.py`: `matrix_probe/`, `ps2_sniffer/`,
+`shift_register_test/`. Standalone; no host-side dependencies. Their pure protocol logic
+is unit-tested on a PC under `tools/tests/` (pytest). Index: `tools/README.md`.
 
 ## `cad/`
 

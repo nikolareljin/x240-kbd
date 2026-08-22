@@ -4,6 +4,20 @@ All notable project changes should be recorded here.
 
 ## Unreleased
 
+### Probing tools (milestone M2)
+
+- `tools/matrix_probe/matrix_probe.py` reworked: two-pass procedure (`PASS = "A"`/`"B"`)
+  so 40 FPC pads are covered with 26 GPIO, `NEVER_DRIVE_PADS` safety list, drive/sense
+  terminology, Markdown table output that pastes into the pinout file, pass merging.
+- `tools/ps2_sniffer/ps2_sniffer.py` gains host-to-device writes and a `synaptics` mode:
+  reset, identify (magic 0x47), capability bits, absolute + W mode, guest enable through
+  the pass-through, 6-byte packet decode, and an unambiguous `VERDICT:` on whether
+  `W == 3` TrackPoint frames were seen.
+- New `tools/shift_register_test/shift_register_test.py`: reads the 74HC165 chain over
+  SPI0, `watch` and `walk` modes, names the wiring fault on a mismatch.
+- New `tools/tests/` (pytest, 21 tests) covering the tools' protocol and formatting
+  logic on the host; `tools/README.md` index.
+
 ### Design corrections (documentation pass, milestone M0)
 
 These change what a builder would wire or configure. Each is recorded in the relevant doc
